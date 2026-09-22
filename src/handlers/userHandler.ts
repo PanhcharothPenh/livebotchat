@@ -100,7 +100,7 @@ export async function handleUserMessage(ctx: Context) {
 
     let sentAdminMessageId: number;
 
-    // 5. Case A: Text Message -> Merged into 1 unified Card
+    // 5. Case A: Text Message -> Clean Font Merged Card
     if (ctx.message.text) {
       const formattedMessage = 
         `📩 <b>សារថ្មីពីអ្នកប្រើប្រាស់</b>\n\n` +
@@ -108,7 +108,7 @@ export async function handleUserMessage(ctx: Context) {
         `🆔 <b>លេខសម្គាល់អ្នកប្រើប្រាស់:</b> <code>${user.id}</code>\n` +
         `🎫 <b>លេខសំណើ:</b> <code>#${ticketShortId}</code>\n\n` +
         `💬 <b>សារ:</b>\n${escapeHtml(ctx.message.text)}\n\n` +
-        `<i>💡 សូមចុច Reply លើសារនេះ ដើម្បីឆ្លើយតបទៅកាន់អ្នកប្រើប្រាស់។</i>`;
+        `💡 សូមចុច Reply លើសារនេះ ដើម្បីឆ្លើយតបទៅកាន់អ្នកប្រើប្រាស់។`;
 
       const sentMsg = await ctx.api.sendMessage(adminChatId, formattedMessage, {
         parse_mode: 'HTML',
@@ -127,7 +127,7 @@ export async function handleUserMessage(ctx: Context) {
         `🆔 <b>លេខសម្គាល់អ្នកប្រើប្រាស់:</b> <code>${user.id}</code>\n` +
         `🎫 <b>លេខសំណើ:</b> <code>#${ticketShortId}</code>` +
         mediaCaption + `\n\n` +
-        `<i>💡 សូមចុច Reply លើសារនេះ ដើម្បីឆ្លើយតបទៅកាន់អ្នកប្រើប្រាស់។</i>`;
+        `💡 សូមចុច Reply លើសារនេះ ដើម្បីឆ្លើយតបទៅកាន់អ្នកប្រើប្រាស់។`;
 
       let sentMsg;
       if (ctx.message.photo) {
@@ -168,7 +168,7 @@ export async function handleUserMessage(ctx: Context) {
       const copyMsg = await ctx.api.copyMessage(adminChatId, ctx.chat.id, userMessageId);
       const cardMsg = await ctx.api.sendMessage(
         adminChatId,
-        `📩 <b>សារថ្មីពីអ្នកប្រើប្រាស់</b> (Sticker)\n👤 <b>ឈ្មោះ:</b> ${userDisplay} (${usernameDisplay})\n🆔 <b>លេខសម្គាល់អ្នកប្រើប្រាស់:</b> <code>${user.id}</code>\n🎫 <b>លេខសំណើ:</b> <code>#${ticketShortId}</code>`,
+        `📩 <b>សារថ្មីពីអ្នកប្រើប្រាស់</b> (Sticker)\n👤 <b>ឈ្មោះ:</b> ${userDisplay} (${usernameDisplay})\n🆔 <b>លេខសម្គាល់អ្នកប្រើប្រាស់:</b> <code>${user.id}</code>\n🎫 <b>លេខសំណើ:</b> <code>#${ticketShortId}</code>\n\n💡 សូមចុច Reply លើសារនេះ ដើម្បីឆ្លើយតប។`,
         {
           parse_mode: 'HTML',
           reply_markup: actionKeyboard,
