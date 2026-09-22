@@ -110,25 +110,4 @@ export function getAdminBottomKeyboard(): Keyboard {
     .persistent();
 }
 
-/**
- * Persistent Big Bottom Menu Buttons for Customers
- */
-export function getUserBottomKeyboard(lang = 'km'): Keyboard {
-  if (lang === 'en') {
-    return new Keyboard()
-      .text('🚀 Start Chat')
-      .row()
-      .text('🌐 Change Language')
-      .text('❓ Help')
-      .resized()
-      .persistent();
-  }
-  return new Keyboard()
-    .text('🚀 ចាប់ផ្តើមការសន្ទនា (Start Chat)')
-    .row()
-    .text('🌐 ប្តូរភាសា (Language)')
-    .text('❓ ជំនួយ (Help)')
-    .resized()
-    .persistent();
-}
 

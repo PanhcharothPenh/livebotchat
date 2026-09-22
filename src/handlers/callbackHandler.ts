@@ -4,7 +4,6 @@ import {
   getRatingKeyboard,
   getFeedbackCategoriesKeyboard,
   getAdminTicketClosedKeyboard,
-  getUserBottomKeyboard,
 } from '../utils/i18n.js';
 import { UserService } from '../services/userService.js';
 import { TicketService } from '../services/ticketService.js';
@@ -25,7 +24,7 @@ export async function handleCallbackQuery(ctx: Context) {
 
       const t = translations[lang] || translations.km;
       await ctx.reply(t.helpPrompt, {
-        reply_markup: getUserBottomKeyboard(lang),
+        reply_markup: { remove_keyboard: true },
       });
       return;
     }

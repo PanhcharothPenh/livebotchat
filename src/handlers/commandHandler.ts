@@ -5,7 +5,6 @@ import {
   getLanguageKeyboard,
   getRatingKeyboard,
   getAdminBottomKeyboard,
-  getUserBottomKeyboard,
 } from '../utils/i18n.js';
 import { UserService } from '../services/userService.js';
 import { TicketService } from '../services/ticketService.js';
@@ -35,14 +34,14 @@ export const commandHandlers = {
       `📁 <b>Type:</b> ${ctx.chat.type}\n\n` +
       `<i>👉 If this is your Support Group, copy <code>${ctx.chat.id}</code> into <b>ADMIN_CHAT_ID</b> on Vercel!</i>`;
 
-    const keyboard = isAdmin(ctx) ? getAdminBottomKeyboard() : getUserBottomKeyboard();
+    const keyboard = isAdmin(ctx) ? getAdminBottomKeyboard() : undefined;
     await ctx.reply(idText, { parse_mode: 'HTML', reply_markup: keyboard }).catch(() => {
       ctx.reply(`Chat ID: ${ctx.chat?.id}`);
     });
   },
 
   /**
-   * /start - Welcome message + Interactive Language Selector + Big Bottom Buttons
+   * /start - Welcome message + Interactive Language Selector
    */
   async start(ctx: Context) {
     if (!ctx.from) return;
@@ -59,7 +58,7 @@ export const commandHandlers = {
         logger.error('Failed to sync user on /start:', err);
       }
 
-      // 1. Send Exact Custom Welcome Greeting with Language Selector
+      // Send Exact Custom Welcome Greeting with Language Selector
       const welcomeText = 
         `សួស្តី! សូមស្វាគមន៍មកកាន់ <b>ក្រុមការងារ NSSF SOC</b>\n` +
         `Hi! Welcome to <b>NSSF SOC Support</b>\n\n` +
@@ -68,11 +67,6 @@ export const commandHandlers = {
       await ctx.reply(welcomeText, {
         parse_mode: 'HTML',
         reply_markup: getLanguageKeyboard(),
-      }).catch(() => {});
-
-      // 2. Activate Big Bottom Menu Buttons
-      await ctx.reply('👇 ឬជ្រើសរើសមុខងារខាងក្រោម / Or use menu below:', {
-        reply_markup: getUserBottomKeyboard(),
       }).catch(() => {});
     } else if (isAdmin(ctx)) {
       await ctx.reply('🤖 <b>Support Bot Admin Console Ready.</b>\nType /help to see available admin commands.', {
@@ -100,7 +94,7 @@ export const commandHandlers = {
     } else {
       await ctx.reply(
         '💬 សូមផ្ញើសារ រូបភាព ឬសំណួររបស់អ្នកនៅទីនេះ ក្រុមការងារយើងនឹងឆ្លើយតបជូនភ្លាមៗ!\n\nSend any message, photo, or question here and our support team will assist you.',
-        { reply_markup: getUserBottomKeyboard() }
+        { reply_markup: { remove_keyboard: true } }
       ).catch(() => {});
     }
   },
