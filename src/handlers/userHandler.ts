@@ -85,17 +85,17 @@ export async function handleUserMessage(ctx: Context) {
   }
 
   try {
-    // 5. Send User Header Card in Admin Group to clearly show sender details
+    // 5. Send User Header Card in Khmer format in Admin Group
     const userDisplay = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Anonymous';
     const usernameDisplay = user.username ? `@${user.username}` : 'No username';
     const ticketShortId = ticketId ? ticketId.substring(0, 8) : 'N/A';
 
     const headerText = 
-      `📩 <b>Message from User</b>\n` +
-      `👤 <b>Name:</b> ${userDisplay} (${usernameDisplay})\n` +
-      `🆔 <b>User ID:</b> <code>${user.id}</code>\n` +
-      `🎫 <b>Ticket:</b> <code>#${ticketShortId}</code>\n` +
-      `<i>💡 Reply to this card or the message below to respond to the user.</i>`;
+      `📩 <b>សារថ្មីពីអ្នកប្រើប្រាស់</b>\n\n` +
+      `👤 <b>ឈ្មោះ:</b> ${userDisplay} (${usernameDisplay})\n` +
+      `🆔 <b>លេខសម្គាល់អ្នកប្រើប្រាស់:</b> <code>${user.id}</code>\n` +
+      `🎫 <b>លេខសំណើ:</b> <code>#${ticketShortId}</code>\n\n` +
+      `<i>💡 សូមចុចលើពាក្យ Reply លើសារនេះ ឬសារខាងក្រោម ដើម្បីឆ្លើយតបទៅកាន់អ្នកប្រើប្រាស់។</i>`;
 
     const headerMsg = await ctx.api.sendMessage(adminChatId, headerText, { parse_mode: 'HTML' });
 
@@ -133,6 +133,6 @@ export async function handleUserMessage(ctx: Context) {
     logger.info(`Relayed message from user ${user.id} to admin chat (Header: ${headerMsg.message_id}, Relay: ${adminRelayMsg.message_id})`);
   } catch (err) {
     logger.error(`Failed to forward message from user ${user.id} to admin group:`, err);
-    await ctx.reply('⚠️ Sorry, there was an issue delivering your message to our support team. Please try again shortly.').catch(() => {});
+    await ctx.reply('⚠️ សូមអភ័យទោស មានបញ្ហាក្នុងការផ្ញើសារទៅកាន់ក្រុមការងារ។ សូមព្យាយាមម្តងទៀត។').catch(() => {});
   }
 }

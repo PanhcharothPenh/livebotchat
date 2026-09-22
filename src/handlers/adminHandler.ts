@@ -30,10 +30,14 @@ export async function handleAdminReply(ctx: Context) {
   let targetUserId: number | null = messageRecord?.user_id || null;
   let ticketId = messageRecord?.ticket_id || null;
 
-  // 2. Fallback: Parse User ID directly from header card text if replied to header card
+  // 2. Fallback: Parse User ID directly from header card text (supports Khmer & English)
   if (!targetUserId && (replyTo.text || replyTo.caption)) {
     const fullText = replyTo.text || replyTo.caption || '';
-    const match = fullText.match(/User ID:\s*([0-9]+)/i) || fullText.match(/ID:\s*([0-9]+)/i);
+    const match = 
+      fullText.match(/លេខសម្គាល់អ្នកប្រើប្រាស់:\s*([0-9]+)/i) ||
+      fullText.match(/User ID:\s*([0-9]+)/i) ||
+      fullText.match(/ID:\s*([0-9]+)/i);
+
     if (match) {
       targetUserId = parseInt(match[1], 10);
     }
