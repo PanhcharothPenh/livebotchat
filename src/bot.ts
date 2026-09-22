@@ -31,6 +31,7 @@ export function getBot(tokenOverride?: string): Bot {
     });
 
     // Commands
+    _botInstance.command('id', commandHandlers.id);
     _botInstance.command('start', commandHandlers.start);
     _botInstance.command('help', commandHandlers.help);
     _botInstance.command('close', commandHandlers.close);

@@ -17,6 +17,24 @@ function isAdmin(ctx: Context): boolean {
 
 export const commandHandlers = {
   /**
+   * /id - Get current chat and user ID easily
+   */
+  async id(ctx: Context) {
+    if (!ctx.chat) return;
+    const title = (ctx.chat as any).title || `${ctx.from?.first_name || 'Private Chat'}`;
+    const idText = 
+      `📍 <b>Chat Info:</b>\n\n` +
+      `📛 <b>Name:</b> ${title}\n` +
+      `🆔 <b>Chat ID:</b> <code>${ctx.chat.id}</code>\n` +
+      `📁 <b>Type:</b> ${ctx.chat.type}\n\n` +
+      `<i>👉 If this is your Support Group, copy <code>${ctx.chat.id}</code> into <b>ADMIN_CHAT_ID</b> on Vercel!</i>`;
+
+    await ctx.reply(idText, { parse_mode: 'HTML' }).catch(() => {
+      ctx.reply(`Chat ID: ${ctx.chat?.id}`);
+    });
+  },
+
+  /**
    * /start - Welcome message + Interactive Language Selector
    */
   async start(ctx: Context) {
