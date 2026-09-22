@@ -1,13 +1,4 @@
 {
   "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/webhook",
-      "destination": "/api/webhook"
-    },
-    {
-      "source": "/api/set-webhook",
-      "destination": "/api/set-webhook"
-    }
-  ]
+  "outputDirectory": "public"
 }
