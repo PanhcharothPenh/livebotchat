@@ -5,6 +5,10 @@ import { TicketService } from '../services/ticketService.js';
 import { RelayService } from '../services/relayService.js';
 import { logger } from '../utils/logger.js';
 
+function getAdminChatId(): number {
+  return parseInt(process.env.ADMIN_CHAT_ID || String(config.adminChatId), 10);
+}
+
 export async function handleUserMessage(ctx: Context) {
   if (!ctx.from || !ctx.message || ctx.chat?.type !== 'private') {
     return;
@@ -12,6 +16,12 @@ export async function handleUserMessage(ctx: Context) {
 
   const user = ctx.from;
   const userMessageId = ctx.message.message_id;
+  const adminChatId = getAdminChatId();
+
+  if (!adminChatId || adminChatId === 0) {
+    logger.error('ADMIN_CHAT_ID is not configured in environment variables.');
+    return;
+  }
 
   // 1. Check if user is banned
   const isBanned = await UserService.isUserBanned(user.id);
@@ -87,11 +97,11 @@ export async function handleUserMessage(ctx: Context) {
       `🎫 <b>Ticket:</b> <code>#${ticketShortId}</code>\n` +
       `<i>💡 Reply to the message below to respond directly to this user.</i>`;
 
-    await ctx.api.sendMessage(config.adminChatId, headerText, { parse_mode: 'HTML' });
+    await ctx.api.sendMessage(adminChatId, headerText, { parse_mode: 'HTML' });
 
     // 6. Copy the exact message into Admin Group
     const adminRelayMsg = await ctx.api.copyMessage(
-      config.adminChatId,
+      adminChatId,
       ctx.chat.id,
       userMessageId
     );

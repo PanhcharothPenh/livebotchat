@@ -3,8 +3,13 @@ import { config } from '../config.js';
 import { RelayService } from '../services/relayService.js';
 import { logger } from '../utils/logger.js';
 
+function getAdminChatId(): number {
+  return parseInt(process.env.ADMIN_CHAT_ID || String(config.adminChatId), 10);
+}
+
 export async function handleAdminReply(ctx: Context) {
-  if (!ctx.message || ctx.chat?.id !== config.adminChatId) {
+  const adminChatId = getAdminChatId();
+  if (!ctx.message || ctx.chat?.id !== adminChatId) {
     return;
   }
 
@@ -65,7 +70,7 @@ export async function handleAdminReply(ctx: Context) {
     // 3. Copy the admin's reply message directly to the customer's private chat
     const sentToUser = await ctx.api.copyMessage(
       targetUserId,
-      config.adminChatId,
+      adminChatId,
       adminMsgId
     );
 

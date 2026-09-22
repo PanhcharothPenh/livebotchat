@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { config } from './config.js';
 
 export interface UserRecord {
@@ -33,17 +33,31 @@ export interface MessageRecord {
   created_at?: string;
 }
 
-// Fallback placeholder to prevent crashes during static build step on Vercel
-const supabaseUrl = config.supabaseUrl || 'https://placeholder.supabase.co';
-const supabaseKey = config.supabaseServiceRoleKey || 'placeholder-key';
+let _supabaseInstance: SupabaseClient | null = null;
 
-export const supabase = createClient(
-  supabaseUrl,
-  supabaseKey,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
+export function getSupabase(): SupabaseClient {
+  const url = process.env.SUPABASE_URL?.trim() || config.supabaseUrl || 'https://placeholder.supabase.co';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || config.supabaseServiceRoleKey || 'placeholder-key';
+
+  if (!_supabaseInstance) {
+    _supabaseInstance = createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
   }
-);
+  return _supabaseInstance;
+}
+
+// Proxy export for transparent backwards compatibility
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const client = getSupabase();
+    const value = (client as unknown as Record<string, unknown>)[prop as string];
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  },
+});

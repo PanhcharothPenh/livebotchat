@@ -5,8 +5,13 @@ import { TicketService } from '../services/ticketService.js';
 import { RelayService } from '../services/relayService.js';
 import { logger } from '../utils/logger.js';
 
+function getAdminChatId(): number {
+  return parseInt(process.env.ADMIN_CHAT_ID || String(config.adminChatId), 10);
+}
+
 function isAdmin(ctx: Context): boolean {
-  return ctx.chat?.id === config.adminChatId || ctx.from?.id === config.adminChatId;
+  const adminChatId = getAdminChatId();
+  return ctx.chat?.id === adminChatId || ctx.from?.id === adminChatId;
 }
 
 export const commandHandlers = {
@@ -24,7 +29,8 @@ export const commandHandlers = {
         last_name: ctx.from.last_name,
       });
 
-      await ctx.reply(config.welcomeMessage, { parse_mode: 'HTML' });
+      const welcome = process.env.WELCOME_MESSAGE || config.welcomeMessage;
+      await ctx.reply(welcome, { parse_mode: 'HTML' });
     } else if (isAdmin(ctx)) {
       await ctx.reply('🤖 <b>Support Bot Admin Console Ready.</b>\nType /help to see available admin commands.', {
         parse_mode: 'HTML',
@@ -61,6 +67,7 @@ export const commandHandlers = {
     if (!ctx.from) return;
 
     let targetUserId: number | null = null;
+    const closedMsg = process.env.TICKET_CLOSED_MESSAGE || config.ticketClosedMessage;
 
     if (isAdmin(ctx)) {
       // Check if replied to a message
@@ -87,7 +94,7 @@ export const commandHandlers = {
 
       // Notify user
       try {
-        await ctx.api.sendMessage(targetUserId, config.ticketClosedMessage);
+        await ctx.api.sendMessage(targetUserId, closedMsg);
       } catch (err) {
         logger.warn(`Could not notify user ${targetUserId} of closed ticket:`, err);
       }
@@ -99,7 +106,7 @@ export const commandHandlers = {
       // User closing their own ticket
       targetUserId = ctx.from.id;
       await TicketService.closeOpenTicket(targetUserId);
-      await ctx.reply(config.ticketClosedMessage);
+      await ctx.reply(closedMsg);
     }
   },
 
