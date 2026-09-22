@@ -34,6 +34,25 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const protocol = host.includes('localhost') ? 'http' : 'https';
   const urlObj = new URL(req.url || '/', `${protocol}://${host}`);
 
+  // Check if Supabase credentials are configured in Vercel
+  const supabaseUrl = process.env.SUPABASE_URL?.trim();
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder')) {
+    res.statusCode = 400;
+    res.end(
+      JSON.stringify(
+        {
+          success: false,
+          error:
+            'សូមកំណត់ SUPABASE_URL និង SUPABASE_SERVICE_ROLE_KEY នៅក្នុង Vercel Environment Variables ជាមុនសិន។ (Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel settings and Redeploy).',
+        },
+        null,
+        2
+      )
+    );
+    return;
+  }
+
   try {
     // 1. GET - List all staff
     if (req.method === 'GET') {

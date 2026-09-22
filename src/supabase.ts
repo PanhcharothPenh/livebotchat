@@ -49,8 +49,16 @@ export interface StaffMemberRecord {
 let _supabaseInstance: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
-  const url = process.env.SUPABASE_URL?.trim() || config.supabaseUrl || 'https://placeholder.supabase.co';
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || config.supabaseServiceRoleKey || 'placeholder-key';
+  let url = (process.env.SUPABASE_URL || config.supabaseUrl || '').trim();
+  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || config.supabaseServiceRoleKey || '').trim() || 'placeholder-key';
+
+  if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`;
+  }
+
+  if (!url || !url.startsWith('http')) {
+    url = 'https://placeholder.supabase.co';
+  }
 
   if (!_supabaseInstance) {
     _supabaseInstance = createClient(url, key, {

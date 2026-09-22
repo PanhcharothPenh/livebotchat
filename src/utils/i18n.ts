@@ -17,7 +17,7 @@ export const translations: Record<string, Translation> = {
     welcome: 'សួស្តី! សូមស្វាគមន៍មកកាន់ <b>ក្រុមការងារ NSSF SOC</b>\nHi! Welcome to <b>NSSF SOC Support</b>',
     selectLanguage: 'សូមជ្រើសរើសភាសា / Please select a language:',
     helpPrompt: 'សូមផ្ញើសំណួរ បញ្ហា ឬឯកសាររបស់អ្នកនៅទីនេះ ក្រុមការងាររបស់យើងនឹងឆ្លើយតបជូនលោកអ្នកក្នុងពេលឆាប់ៗ។',
-    agentConnected: (name: string) => `👨‍💼 ភ្នាក់ងារផ្ទាល់ <b>${name}</b> ត្រូវបានភ្ជាប់។`,
+    agentConnected: (name: string) => `👨‍💼 ភ្នាក់ងារជជែកផ្ទាល់ <b>${name}</b> ត្រូវបានភ្ជាប់។`,
     ticketClosed: '✅ ការសន្ទនារបស់លោកអ្នកត្រូវបានបញ្ចប់។ សូមអរគុណដែលបានទាក់ទងមកយើងខ្ញុំ!',
     ratingPrompt: 'សូមវាយតម្លៃកម្រិតនៃការពេញចិត្តចំពោះសេវាកម្មរបស់យើងខ្ញុំ៖',
     ratingThanks: 'សូមអរគុណសម្រាប់ការវាយតម្លៃរបស់លោកអ្នក! 🙏',
