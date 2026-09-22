@@ -79,14 +79,18 @@ export default async function (req: IncomingMessage, res: ServerResponse) {
     // Automatically configure Welcome Description & Menu Commands on Telegram
     try {
       await liveBot.api.setMyDescription(
-        '👋 សួស្តី! សូមស្វាគមន៍មកកាន់សេវាបម្រើអតិថិជន NSSF SOC Support។\n\n' +
-        'លោកអ្នកអាចផ្ញើសំណួរ បញ្ហា ឬឯកសារផ្សេងៗនៅទីនេះ ដើម្បីទទួលបានការឆ្លើយតបពីក្រុមការងាររបស់យើងខ្ញុំ។\n\n' +
-        '👉 សូមចុចប៊ូតុង Start ខាងក្រោមដើម្បីចាប់ផ្តើម!\n\n' +
-        '---\n' +
-        'Welcome to NSSF SOC Live Support. Please click Start to chat with our team.'
+        '🛡️ NSSF SOC Live Chat Support\n' +
+        '🔒 ឯកជនភាព និងសុវត្ថិភាព (Privacy & Security)\n\n' +
+        'មគ្គុទ្ទេសក៍ និងរបៀបប្រើប្រាស់៖\n' +
+        'Bot នេះជួយសម្រួលការទំនាក់ទំនង និងការគាំទ្រផ្ទាល់ពីក្រុមការងារ NSSF SOC ២៤/៧!\n\n' +
+        '✨ របៀបប្រើប្រាស់ (How to Use):\n' +
+        '1️⃣ ផ្ញើសារ ឬចោទសួរអំពីបញ្ហាផ្សេងៗមកកាន់ Bot\n' +
+        '2️⃣ ផ្ញើរូបភាព ឬឯកសារពាក់ព័ន្ធដើម្បីទទួលបានការដោះស្រាយ\n' +
+        '3️⃣ រង់ចាំក្រុមការងារឆ្លើយតបផ្ទាល់ភ្លាមៗ\n\n' +
+        '👉 ចុចប៊ូតុង START ខាងក្រោមដើម្បីចាប់ផ្តើមប្រើប្រាស់!'
       );
 
-      await liveBot.api.setMyShortDescription('សេវាបម្រើអតិថិជន NSSF SOC Live Chat Support');
+      await liveBot.api.setMyShortDescription('សេវាបម្រើអតិថិជន NSSF SOC Live Chat Support 🛡️');
 
       await liveBot.api.setMyCommands([
         { command: 'start', description: 'ចាប់ផ្តើមសន្ទនា / Start Support' },
