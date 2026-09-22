@@ -11,25 +11,12 @@ export interface Config {
   ticketClosedMessage: string;
 }
 
-function getEnv(key: string, required = true, defaultValue = ''): string {
-  const value = process.env[key] || defaultValue;
-  if (required && !value) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-  return value;
-}
-
 export function loadConfig(): Config {
-  const telegramBotToken = getEnv('TELEGRAM_BOT_TOKEN', true);
-  const adminChatIdStr = getEnv('ADMIN_CHAT_ID', true);
-  const adminChatId = parseInt(adminChatIdStr, 10);
-
-  if (isNaN(adminChatId)) {
-    throw new Error(`Invalid ADMIN_CHAT_ID: "${adminChatIdStr}". Must be an integer or negative group ID (e.g., -1001234567890).`);
-  }
-
-  const supabaseUrl = getEnv('SUPABASE_URL', true);
-  const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY', true);
+  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN || '';
+  const adminChatIdStr = process.env.ADMIN_CHAT_ID || '0';
+  const adminChatId = parseInt(adminChatIdStr, 10) || 0;
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
   const webhookSecret = process.env.WEBHOOK_SECRET || undefined;
 
   const welcomeMessage = process.env.WELCOME_MESSAGE || 

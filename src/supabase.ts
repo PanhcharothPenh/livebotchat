@@ -33,9 +33,13 @@ export interface MessageRecord {
   created_at?: string;
 }
 
+// Fallback placeholder to prevent crashes during static build step on Vercel
+const supabaseUrl = config.supabaseUrl || 'https://placeholder.supabase.co';
+const supabaseKey = config.supabaseServiceRoleKey || 'placeholder-key';
+
 export const supabase = createClient(
-  config.supabaseUrl,
-  config.supabaseServiceRoleKey,
+  supabaseUrl,
+  supabaseKey,
   {
     auth: {
       persistSession: false,

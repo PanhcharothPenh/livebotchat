@@ -6,7 +6,8 @@ import { handleAdminReply } from './handlers/adminHandler.js';
 import { logger } from './utils/logger.js';
 
 export function createBot(): Bot {
-  const bot = new Bot(config.telegramBotToken);
+  const token = config.telegramBotToken || '123456:dummytokenforbuild';
+  const bot = new Bot(token);
 
   // Error handling
   bot.catch((err) => {
