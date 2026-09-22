@@ -76,6 +76,27 @@ export default async function (req: IncomingMessage, res: ServerResponse) {
       allowed_updates: ['message', 'edited_message', 'callback_query'],
     });
 
+    // Automatically configure Welcome Description & Menu Commands on Telegram
+    try {
+      await liveBot.api.setMyDescription(
+        '👋 សួស្តី! សូមស្វាគមន៍មកកាន់សេវាបម្រើអតិថិជន NSSF SOC Support។\n\n' +
+        'លោកអ្នកអាចផ្ញើសំណួរ បញ្ហា ឬឯកសារផ្សេងៗនៅទីនេះ ដើម្បីទទួលបានការឆ្លើយតបពីក្រុមការងាររបស់យើងខ្ញុំ។\n\n' +
+        '👉 សូមចុចប៊ូតុង Start ខាងក្រោមដើម្បីចាប់ផ្តើម!\n\n' +
+        '---\n' +
+        'Welcome to NSSF SOC Live Support. Please click Start to chat with our team.'
+      );
+
+      await liveBot.api.setMyShortDescription('សេវាបម្រើអតិថិជន NSSF SOC Live Chat Support');
+
+      await liveBot.api.setMyCommands([
+        { command: 'start', description: 'ចាប់ផ្តើមសន្ទនា / Start Support' },
+        { command: 'help', description: 'ជំនួយ និងព័ត៌មាន / Help' },
+        { command: 'id', description: 'លេខសម្គាល់ / Show Chat ID' },
+      ]);
+    } catch (e) {
+      logger.warn('Could not update bot description/commands:', e);
+    }
+
     const info = await liveBot.api.getWebhookInfo();
     const me = await liveBot.api.getMe();
 
@@ -85,7 +106,7 @@ export default async function (req: IncomingMessage, res: ServerResponse) {
       JSON.stringify(
         {
           success: true,
-          message: `Webhook successfully configured for @${me.username}!`,
+          message: `Webhook and Welcome Description configured for @${me.username}!`,
           bot: {
             id: me.id,
             username: me.username,
