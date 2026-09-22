@@ -42,27 +42,18 @@ export default async function (req: IncomingMessage, res: ServerResponse) {
     }
 
     if (action === 'delete') {
-      await liveBot.api.deleteWebhook({ drop_pending_updates: false });
+      await liveBot.api.deleteWebhook({ drop_pending_updates: true });
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ success: true, message: 'Webhook deleted successfully' }, null, 2));
       return;
     }
 
-    // Default: Set webhook
-    const webhookSecret = process.env.WEBHOOK_SECRET?.trim();
-    
-    // Configure webhook with or without secret
-    if (webhookSecret) {
-      await liveBot.api.setWebhook(webhookUrl, {
-        secret_token: webhookSecret,
-        allowed_updates: ['message', 'edited_message', 'callback_query'],
-      });
-    } else {
-      await liveBot.api.setWebhook(webhookUrl, {
-        allowed_updates: ['message', 'edited_message', 'callback_query'],
-      });
-    }
+    // Default: Set webhook with clean updates drop
+    await liveBot.api.setWebhook(webhookUrl, {
+      drop_pending_updates: true,
+      allowed_updates: ['message', 'edited_message', 'callback_query'],
+    });
 
     const info = await liveBot.api.getWebhookInfo();
     const me = await liveBot.api.getMe();
