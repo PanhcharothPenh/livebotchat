@@ -52,10 +52,10 @@ export const commandHandlers = {
         logger.error('Failed to sync user on /start:', err);
       }
 
-      // 1. Send Welcome Greeting
+      // 1. Send Exact Custom Welcome Greeting
       const welcomeText = 
-        `<b>សួស្តី! សូមស្វាគមន៍មកកាន់សេវាបម្រើអតិថិជន NSSF SOC</b>\n` +
-        `<i>Hi! Welcome to NSSF SOC Customer Support</i>\n\n` +
+        `សួស្តី! សូមស្វាគមន៍មកកាន់ <b>ក្រុមការងារ NSSF SOC</b>\n` +
+        `Hi! Welcome to <b>NSSF SOC Support</b>\n\n` +
         `សូមជ្រើសរើសភាសា / Please select a language:`;
 
       try {

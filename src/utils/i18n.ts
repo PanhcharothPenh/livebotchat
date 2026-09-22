@@ -14,7 +14,7 @@ export interface Translation {
 
 export const translations: Record<string, Translation> = {
   km: {
-    welcome: 'សួស្តី! សូមស្វាគមន៍មកកាន់សេវាបម្រើអតិថិជន <b>NSSF SOC Support</b>\nHi! Welcome to NSSF SOC Support',
+    welcome: 'សួស្តី! សូមស្វាគមន៍មកកាន់ <b>ក្រុមការងារ NSSF SOC</b>\nHi! Welcome to <b>NSSF SOC Support</b>',
     selectLanguage: 'សូមជ្រើសរើសភាសា / Please select a language:',
     helpPrompt: 'សូមផ្ញើសំណួរ បញ្ហា ឬឯកសាររបស់អ្នកនៅទីនេះ ក្រុមការងាររបស់យើងនឹងឆ្លើយតបជូនលោកអ្នកក្នុងពេលឆាប់ៗ។',
     agentConnected: (name: string) => `👨‍💼 ភ្នាក់ងារផ្ទាល់ <b>${name}</b> ត្រូវបានភ្ជាប់។`,
@@ -25,7 +25,7 @@ export const translations: Record<string, Translation> = {
     feedbackThanks: 'សូមអរគុណច្រើនចំពោះការផ្តល់មតិកែលម្អ! សូមជូនពរលោកអ្នកមានសុខភាពល្អ។',
   },
   en: {
-    welcome: 'Hi! Welcome to <b>NSSF SOC Customer Support</b>.',
+    welcome: 'Hi! Welcome to <b>NSSF SOC Support</b>.',
     selectLanguage: 'Please select your preferred language:',
     helpPrompt: 'Please send your questions, issues, or documents here. Our support team will assist you shortly.',
     agentConnected: (name: string) => `👨‍💼 Live agent <b>${name}</b> is now connected.`,
