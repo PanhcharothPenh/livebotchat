@@ -1,5 +1,6 @@
 import { Context } from 'grammy';
 import { config } from '../config.js';
+import { getAdminTicketActionKeyboard } from '../utils/i18n.js';
 import { UserService } from '../services/userService.js';
 import { TicketService } from '../services/ticketService.js';
 import { RelayService } from '../services/relayService.js';
@@ -40,7 +41,7 @@ export async function handleUserMessage(ctx: Context) {
 
   // 3. Get or create active support ticket
   const ticket = await TicketService.getOrCreateOpenTicket(user.id);
-  const ticketId = ticket?.id || null;
+  const ticketId = ticket?.id || 'general';
 
   // 4. Determine content type and text preview for database logging
   let contentType = 'unknown';
@@ -85,10 +86,10 @@ export async function handleUserMessage(ctx: Context) {
   }
 
   try {
-    // 5. Send User Header Card in Khmer format in Admin Group
+    // 5. Send User Header Card in Khmer format with 1-Click Action Buttons
     const userDisplay = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Anonymous';
     const usernameDisplay = user.username ? `@${user.username}` : 'No username';
-    const ticketShortId = ticketId ? ticketId.substring(0, 8) : 'N/A';
+    const ticketShortId = ticketId.substring(0, 8);
 
     const headerText = 
       `📩 <b>សារថ្មីពីអ្នកប្រើប្រាស់</b>\n\n` +
@@ -97,7 +98,10 @@ export async function handleUserMessage(ctx: Context) {
       `🎫 <b>លេខសំណើ:</b> <code>#${ticketShortId}</code>\n\n` +
       `<i>💡 សូមចុចលើពាក្យ Reply លើសារនេះ ឬសារខាងក្រោម ដើម្បីឆ្លើយតបទៅកាន់អ្នកប្រើប្រាស់។</i>`;
 
-    const headerMsg = await ctx.api.sendMessage(adminChatId, headerText, { parse_mode: 'HTML' });
+    const headerMsg = await ctx.api.sendMessage(adminChatId, headerText, {
+      parse_mode: 'HTML',
+      reply_markup: getAdminTicketActionKeyboard(user.id, ticketId),
+    });
 
     // 6. Copy the exact user message into Admin Group
     const adminRelayMsg = await ctx.api.copyMessage(

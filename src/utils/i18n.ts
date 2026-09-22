@@ -82,3 +82,17 @@ export function getFeedbackCategoriesKeyboard(ticketId: string, lang = 'km'): In
     .row()
     .text('Problem fully resolved', `fb_${ticketId}_accurate`);
 }
+
+/**
+ * 1-Click Action Buttons for Staff inside Support Group
+ */
+export function getAdminTicketActionKeyboard(userId: number, ticketId: string): InlineKeyboard {
+  return new InlineKeyboard()
+    .text('🔴 បញ្ចប់ការសន្ទនា (Close)', `admin_close_${userId}_${ticketId}`)
+    .text('ℹ️ ព័ត៌មាន (Info)', `admin_info_${userId}`);
+}
+
+export function getAdminTicketClosedKeyboard(closedBy: string): InlineKeyboard {
+  return new InlineKeyboard()
+    .text(`✅ បានបញ្ចប់ដោយ ${closedBy}`, 'admin_noop');
+}
