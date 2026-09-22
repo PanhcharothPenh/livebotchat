@@ -51,19 +51,19 @@ export async function handleAdminReply(ctx: Context) {
   const adminMsgId = ctx.message.message_id;
   const activeTicketKey = ticketId || `user_${targetUserId}`;
 
-  // 3. Extract agent name (from Telegram profile)
-  const agentName = ctx.from
-    ? `${ctx.from.first_name || ''} ${ctx.from.last_name || ''}`.trim() || ctx.from.username || 'Support Staff'
-    : 'Support Staff';
+  // 3. Extract agent full name (from Telegram profile) with Khmer fallback
+  const agentFullName = ctx.from
+    ? `${ctx.from.first_name || ''} ${ctx.from.last_name || ''}`.trim() || ctx.from.first_name || ctx.from.username || 'ក្រុមការងារ NSSF SOC'
+    : 'ក្រុមការងារ NSSF SOC';
 
-  // 4. Send "Live Agent [Name] is connected" on first reply for this ticket
+  // 4. Send "Live Agent [Full Name] is connected" on first reply for this ticket
   if (!connectedTickets.has(activeTicketKey)) {
     connectedTickets.add(activeTicketKey);
     try {
       const userRecord = await UserService.getUser(targetUserId);
       const lang = userRecord?.language || 'km';
       const t = translations[lang] || translations.km;
-      await ctx.api.sendMessage(targetUserId, t.agentConnected(agentName), { parse_mode: 'HTML' });
+      await ctx.api.sendMessage(targetUserId, t.agentConnected(agentFullName), { parse_mode: 'HTML' });
     } catch (err) {
       logger.debug('Could not send agent connected notice:', err);
     }
@@ -125,7 +125,7 @@ export async function handleAdminReply(ctx: Context) {
       media_file_id: mediaFileId,
     });
 
-    logger.info(`Relayed admin reply from ${agentName} to user ${targetUserId}`);
+    logger.info(`Relayed admin reply from ${agentFullName} to user ${targetUserId}`);
 
     // Optional: React to admin message to confirm delivery
     try {
