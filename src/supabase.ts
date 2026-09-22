@@ -6,6 +6,7 @@ export interface UserRecord {
   username: string | null;
   first_name: string | null;
   last_name: string | null;
+  language?: string | null;
   is_banned: boolean;
   created_at?: string;
   last_seen_at?: string;
@@ -15,6 +16,8 @@ export interface TicketRecord {
   id: string;
   user_id: number;
   status: 'open' | 'closed';
+  rating?: number | null;
+  feedback?: string | null;
   created_at?: string;
   updated_at?: string;
   closed_at?: string | null;
