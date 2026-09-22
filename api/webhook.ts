@@ -1,6 +1,10 @@
 import type { IncomingMessage, ServerResponse } from 'http';
+import { webhookCallback } from 'grammy';
 import { getBot } from '../src/bot.js';
 import { logger } from '../src/utils/logger.js';
+
+let _cachedHandler: ((req: IncomingMessage, res: ServerResponse) => Promise<void>) | null = null;
+let _cachedToken = '';
 
 export default async function (req: IncomingMessage & { body?: unknown }, res: ServerResponse) {
   if (req.method !== 'POST') {
@@ -19,42 +23,16 @@ export default async function (req: IncomingMessage & { body?: unknown }, res: S
       return;
     }
 
-    const bot = getBot(token);
-
-    // Initialize bot info if not already done
-    if (!bot.isInited()) {
-      await bot.init();
+    // Lazy load and cache the webhook handler for this instance
+    if (!_cachedHandler || _cachedToken !== token) {
+      _cachedToken = token;
+      const bot = getBot(token);
+      _cachedHandler = webhookCallback(bot, 'http', {
+        timeoutMilliseconds: 15000,
+      });
     }
 
-    // Read update body
-    let updateData: unknown = req.body;
-
-    if (typeof updateData === 'string') {
-      try {
-        updateData = JSON.parse(updateData);
-      } catch {
-        // Leave as string
-      }
-    }
-
-    if (!updateData) {
-      const chunks: Buffer[] = [];
-      for await (const chunk of req) {
-        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-      }
-      const rawText = Buffer.concat(chunks).toString('utf-8');
-      if (rawText) {
-        updateData = JSON.parse(rawText);
-      }
-    }
-
-    if (updateData && typeof updateData === 'object') {
-      await bot.handleUpdate(updateData as any);
-    }
-
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ ok: true }));
+    await _cachedHandler(req, res);
   } catch (err) {
     logger.error('Error handling webhook update:', err);
     if (!res.headersSent) {

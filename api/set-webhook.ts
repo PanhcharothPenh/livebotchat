@@ -29,7 +29,7 @@ export default async function (req: IncomingMessage, res: ServerResponse) {
     // Dynamic bot instance with live token
     const liveBot = new Bot(token);
 
-    // Query parameters check (e.g. ?action=info or ?action=delete)
+    // Query parameters check (e.g. ?action=info or ?action=delete or ?action=test_send)
     const urlObj = new URL(req.url || '/', `${protocol}://${host}`);
     const action = urlObj.searchParams.get('action') || 'set';
 
@@ -46,6 +46,27 @@ export default async function (req: IncomingMessage, res: ServerResponse) {
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ success: true, message: 'Webhook deleted successfully' }, null, 2));
+      return;
+    }
+
+    if (action === 'test_send') {
+      const adminChatId = parseInt(process.env.ADMIN_CHAT_ID || '0', 10);
+      if (!adminChatId) {
+        res.statusCode = 400;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ success: false, error: 'ADMIN_CHAT_ID is not configured in Vercel.' }));
+        return;
+      }
+
+      const msg = await liveBot.api.sendMessage(
+        adminChatId,
+        '🧪 <b>Test message from Vercel</b>: Bot is connected to your support group!',
+        { parse_mode: 'HTML' }
+      );
+
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ success: true, message: 'Test message sent to admin chat!', messageDetails: msg }, null, 2));
       return;
     }
 
