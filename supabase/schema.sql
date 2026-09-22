@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     username TEXT,
     first_name TEXT,
     last_name TEXT,
+    language TEXT NOT NULL DEFAULT 'km',
     is_banned BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -19,6 +20,8 @@ CREATE TABLE IF NOT EXISTS public.tickets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+    rating INT,
+    feedback TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     closed_at TIMESTAMPTZ

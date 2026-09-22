@@ -1,11 +1,16 @@
 import { Context } from 'grammy';
 import { config } from '../config.js';
+import { translations } from '../utils/i18n.js';
+import { UserService } from '../services/userService.js';
 import { RelayService } from '../services/relayService.js';
 import { logger } from '../utils/logger.js';
 
 function getAdminChatId(): number {
   return parseInt(process.env.ADMIN_CHAT_ID || String(config.adminChatId), 10);
 }
+
+// Track if an agent connected notification was sent for the active ticket
+const connectedTickets = new Set<string>();
 
 export async function handleAdminReply(ctx: Context) {
   const adminChatId = getAdminChatId();
@@ -23,14 +28,32 @@ export async function handleAdminReply(ctx: Context) {
   const messageRecord = await RelayService.findMessageByAdminMsgId(replyTo.message_id);
 
   if (!messageRecord) {
-    // Might be replying to an internal admin message or older message
     return;
   }
 
   const targetUserId = messageRecord.user_id;
   const adminMsgId = ctx.message.message_id;
+  const ticketId = messageRecord.ticket_id || `user_${targetUserId}`;
 
-  // 2. Extract content preview for logging
+  // 2. Extract agent name (from Telegram profile)
+  const agentName = ctx.from
+    ? `${ctx.from.first_name || ''} ${ctx.from.last_name || ''}`.trim() || ctx.from.username || 'Support Staff'
+    : 'Support Staff';
+
+  // 3. Send "Live Agent [Name] is connected" on first reply for this ticket
+  if (!connectedTickets.has(ticketId)) {
+    connectedTickets.add(ticketId);
+    try {
+      const userRecord = await UserService.getUser(targetUserId);
+      const lang = userRecord?.language || 'km';
+      const t = translations[lang] || translations.km;
+      await ctx.api.sendMessage(targetUserId, t.agentConnected(agentName), { parse_mode: 'HTML' });
+    } catch (err) {
+      logger.debug('Could not send agent connected notice:', err);
+    }
+  }
+
+  // 4. Extract content preview for logging
   let contentType = 'text';
   let textContent: string | null = null;
   let mediaFileId: string | null = null;
@@ -67,14 +90,14 @@ export async function handleAdminReply(ctx: Context) {
   }
 
   try {
-    // 3. Copy the admin's reply message directly to the customer's private chat
+    // 5. Copy the admin's reply message directly to the customer's private chat
     const sentToUser = await ctx.api.copyMessage(
       targetUserId,
       adminChatId,
       adminMsgId
     );
 
-    // 4. Save admin message in Supabase
+    // 6. Save admin message in Supabase
     await RelayService.recordMessage({
       ticket_id: messageRecord.ticket_id,
       user_id: targetUserId,
@@ -86,7 +109,7 @@ export async function handleAdminReply(ctx: Context) {
       media_file_id: mediaFileId,
     });
 
-    logger.info(`Relayed admin reply to user ${targetUserId}`);
+    logger.info(`Relayed admin reply from ${agentName} to user ${targetUserId}`);
 
     // Optional: React to admin message to confirm delivery
     try {

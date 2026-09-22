@@ -48,12 +48,12 @@ export class TicketService {
   }
 
   /**
-   * Close any open ticket for a user
+   * Close any open ticket for a user and return the closed ticket
    */
-  static async closeOpenTicket(userId: number): Promise<boolean> {
+  static async closeOpenTicket(userId: number): Promise<TicketRecord | null> {
     try {
       const now = new Date().toISOString();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('tickets')
         .update({
           status: 'closed',
@@ -61,15 +61,37 @@ export class TicketService {
           updated_at: now,
         })
         .eq('user_id', userId)
-        .eq('status', 'open');
+        .eq('status', 'open')
+        .select()
+        .maybeSingle();
 
       if (error) {
         logger.error(`Failed to close tickets for user ${userId}:`, error);
-        return false;
+        return null;
       }
-      return true;
+      return data;
     } catch (err) {
       logger.error(`Exception in closeOpenTicket for user ${userId}:`, err);
+      return null;
+    }
+  }
+
+  /**
+   * Save customer rating & feedback
+   */
+  static async rateTicket(ticketId: string, rating: number, feedback?: string): Promise<boolean> {
+    try {
+      const payload: Record<string, unknown> = { rating };
+      if (feedback) payload.feedback = feedback;
+
+      const { error } = await supabase
+        .from('tickets')
+        .update(payload)
+        .eq('id', ticketId);
+
+      return !error;
+    } catch (err) {
+      logger.error(`Failed to rate ticket ${ticketId}:`, err);
       return false;
     }
   }

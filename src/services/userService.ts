@@ -17,22 +17,23 @@ export class UserService {
     username?: string | null;
     first_name?: string | null;
     last_name?: string | null;
+    language?: string;
   }): Promise<UserRecord | null> {
     try {
       const now = new Date().toISOString();
       const task = async () => {
+        const payload: Record<string, unknown> = {
+          id: userData.id,
+          username: userData.username || null,
+          first_name: userData.first_name || null,
+          last_name: userData.last_name || null,
+          last_seen_at: now,
+        };
+        if (userData.language) payload.language = userData.language;
+
         const { data, error } = await supabase
           .from('users')
-          .upsert(
-            {
-              id: userData.id,
-              username: userData.username || null,
-              first_name: userData.first_name || null,
-              last_name: userData.last_name || null,
-              last_seen_at: now,
-            },
-            { onConflict: 'id' }
-          )
+          .upsert(payload, { onConflict: 'id' })
           .select()
           .single();
 
@@ -47,6 +48,27 @@ export class UserService {
     } catch (err) {
       logger.error(`Exception in syncUser ${userData.id}:`, err);
       return null;
+    }
+  }
+
+  /**
+   * Update user language preference
+   */
+  static async setUserLanguage(userId: number, lang: string): Promise<boolean> {
+    try {
+      const task = async () => {
+        const { error } = await supabase
+          .from('users')
+          .update({ language: lang })
+          .eq('id', userId);
+
+        return !error;
+      };
+
+      return await withTimeout(task(), 2000, false);
+    } catch (err) {
+      logger.error(`Exception in setUserLanguage ${userId}:`, err);
+      return false;
     }
   }
 

@@ -3,6 +3,7 @@ import { config } from './config.js';
 import { commandHandlers } from './handlers/commandHandler.js';
 import { handleUserMessage } from './handlers/userHandler.js';
 import { handleAdminReply } from './handlers/adminHandler.js';
+import { handleCallbackQuery } from './handlers/callbackHandler.js';
 import { logger } from './utils/logger.js';
 
 let _botInstance: Bot | null = null;
@@ -38,6 +39,9 @@ export function getBot(tokenOverride?: string): Bot {
     _botInstance.command('info', commandHandlers.info);
     _botInstance.command('stats', commandHandlers.stats);
     _botInstance.command('broadcast', commandHandlers.broadcast);
+
+    // Interactive Callback Queries (Language selection, 5-star ratings, feedback categories)
+    _botInstance.on('callback_query:data', handleCallbackQuery);
 
     // User & Admin Message Handlers
     _botInstance.on('message', async (ctx) => {

@@ -1,5 +1,6 @@
 import { Context } from 'grammy';
 import { config } from '../config.js';
+import { translations, getLanguageKeyboard, getRatingKeyboard } from '../utils/i18n.js';
 import { UserService } from '../services/userService.js';
 import { TicketService } from '../services/ticketService.js';
 import { RelayService } from '../services/relayService.js';
@@ -16,7 +17,7 @@ function isAdmin(ctx: Context): boolean {
 
 export const commandHandlers = {
   /**
-   * /start - Welcome message for users
+   * /start - Welcome message + Interactive Language Selector
    */
   async start(ctx: Context) {
     if (!ctx.from) return;
@@ -33,11 +34,21 @@ export const commandHandlers = {
         logger.error('Failed to sync user on /start:', err);
       }
 
-      const welcome = process.env.WELCOME_MESSAGE || config.welcomeMessage;
+      // 1. Send Welcome Greeting
+      const welcomeText = 
+        `<b>សួស្តី! សូមស្វាគមន៍មកកាន់សេវាបម្រើអតិថិជន NSSF SOC</b>\n` +
+        `<i>Hi! Welcome to NSSF SOC Customer Support</i>\n\n` +
+        `សូមជ្រើសរើសភាសា / Please select a language:`;
+
       try {
-        await ctx.reply(welcome, { parse_mode: 'HTML' });
+        await ctx.reply(welcomeText, {
+          parse_mode: 'HTML',
+          reply_markup: getLanguageKeyboard(),
+        });
       } catch {
-        await ctx.reply(welcome).catch(() => {});
+        await ctx.reply('Welcome! Please select language:', {
+          reply_markup: getLanguageKeyboard(),
+        }).catch(() => {});
       }
     } else if (isAdmin(ctx)) {
       await ctx.reply('🤖 <b>Support Bot Admin Console Ready.</b>\nType /help to see available admin commands.', {
@@ -54,8 +65,8 @@ export const commandHandlers = {
       const helpText = 
         `🛠 <b>Admin Commands:</b>\n\n` +
         `• <b>Reply to any user message</b> to send them a direct reply.\n` +
-        `• <code>/close</code> - Reply to a user's message with /close (or <code>/close &lt;user_id&gt;</code>) to mark their ticket resolved.\n` +
-        `• <code>/info &lt;user_id&gt;</code> - View user info & message count (or reply to a message with /info).\n` +
+        `• <code>/close</code> - Reply to a user's message to mark ticket resolved & send satisfaction survey.\n` +
+        `• <code>/info &lt;user_id&gt;</code> - View user info & message count.\n` +
         `• <code>/ban &lt;user_id&gt;</code> - Ban user from sending messages.\n` +
         `• <code>/unban &lt;user_id&gt;</code> - Unban user.\n` +
         `• <code>/stats</code> - View bot metrics & open tickets.\n` +
@@ -69,13 +80,12 @@ export const commandHandlers = {
   },
 
   /**
-   * /close - Close active support ticket
+   * /close - Close active ticket and trigger CSAT rating
    */
   async close(ctx: Context) {
     if (!ctx.from) return;
 
     let targetUserId: number | null = null;
-    const closedMsg = process.env.TICKET_CLOSED_MESSAGE || config.ticketClosedMessage;
 
     if (isAdmin(ctx)) {
       // Check if replied to a message
@@ -98,23 +108,37 @@ export const commandHandlers = {
         return;
       }
 
-      await TicketService.closeOpenTicket(targetUserId);
+      const closedTicket = await TicketService.closeOpenTicket(targetUserId);
+      const ticketId = closedTicket?.id || 'general';
 
-      // Notify user
+      const userRecord = await UserService.getUser(targetUserId);
+      const lang = userRecord?.language || 'km';
+      const t = translations[lang] || translations.km;
+
+      // Send Rating Survey to customer
       try {
-        await ctx.api.sendMessage(targetUserId, closedMsg);
+        await ctx.api.sendMessage(targetUserId, `${t.ticketClosed}\n\n${t.ratingPrompt}`, {
+          reply_markup: getRatingKeyboard(ticketId),
+        });
       } catch (err) {
         logger.warn(`Could not notify user ${targetUserId} of closed ticket:`, err);
       }
 
-      await ctx.reply(`✅ Ticket for user <code>${targetUserId}</code> has been marked as closed.`, {
+      await ctx.reply(`✅ Ticket for user <code>${targetUserId}</code> has been closed and survey sent.`, {
         parse_mode: 'HTML',
       });
     } else if (ctx.chat?.type === 'private') {
-      // User closing their own ticket
       targetUserId = ctx.from.id;
-      await TicketService.closeOpenTicket(targetUserId);
-      await ctx.reply(closedMsg).catch(() => {});
+      const closedTicket = await TicketService.closeOpenTicket(targetUserId);
+      const ticketId = closedTicket?.id || 'general';
+
+      const userRecord = await UserService.getUser(targetUserId);
+      const lang = userRecord?.language || 'km';
+      const t = translations[lang] || translations.km;
+
+      await ctx.reply(`${t.ticketClosed}\n\n${t.ratingPrompt}`, {
+        reply_markup: getRatingKeyboard(ticketId),
+      }).catch(() => {});
     }
   },
 
@@ -215,6 +239,7 @@ export const commandHandlers = {
       `🆔 <b>ID:</b> <code>${user.id}</code>\n` +
       `👤 <b>Name:</b> ${user.first_name || ''} ${user.last_name || ''}\n` +
       `🌐 <b>Username:</b> ${user.username ? '@' + user.username : 'None'}\n` +
+      `🗣 <b>Language:</b> ${user.language === 'en' ? '🇬🇧 English' : '🇰🇭 ខ្មែរ'}\n` +
       `🚫 <b>Status:</b> ${user.is_banned ? '🔴 Banned' : '🟢 Active'}\n` +
       `💬 <b>Total Messages:</b> ${msgCount}\n` +
       `🕒 <b>First Seen:</b> ${user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A'}\n` +
@@ -265,7 +290,6 @@ export const commandHandlers = {
       try {
         await ctx.api.sendMessage(user.id, text, { parse_mode: 'HTML' });
         sent++;
-        // Small delay to respect Telegram rate limits
         await new Promise((resolve) => setTimeout(resolve, 50));
       } catch (err) {
         failed++;
