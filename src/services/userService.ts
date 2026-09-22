@@ -8,6 +8,9 @@ function withTimeout<T>(promise: Promise<T>, ms = 2000, fallback: T): Promise<T>
   ]);
 }
 
+const banCache = new Map<number, { isBanned: boolean; expiresAt: number }>();
+const BAN_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+
 export class UserService {
   /**
    * Upsert a user when they message the bot
@@ -99,6 +102,11 @@ export class UserService {
    * Check if a user is currently banned
    */
   static async isUserBanned(userId: number): Promise<boolean> {
+    const cached = banCache.get(userId);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.isBanned;
+    }
+
     try {
       const task = async () => {
         const { data, error } = await supabase
@@ -111,7 +119,9 @@ export class UserService {
         return Boolean(data.is_banned);
       };
 
-      return await withTimeout(task(), 1500, false);
+      const result = await withTimeout(task(), 1500, false);
+      banCache.set(userId, { isBanned: result, expiresAt: Date.now() + BAN_CACHE_TTL });
+      return result;
     } catch (err) {
       logger.error(`Exception in isUserBanned ${userId}:`, err);
       return false;
@@ -122,6 +132,7 @@ export class UserService {
    * Ban or unban a user
    */
   static async setBanStatus(userId: number, isBanned: boolean): Promise<boolean> {
+    banCache.set(userId, { isBanned, expiresAt: Date.now() + BAN_CACHE_TTL });
     try {
       const task = async () => {
         const { error } = await supabase

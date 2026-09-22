@@ -25,14 +25,11 @@ export async function handleAdminReply(ctx: Context) {
     return;
   }
 
-  // 1. Check if the message being replied to was a relayed message or header card in Supabase
-  const messageRecord = await RelayService.findMessageByAdminMsgId(replyTo.message_id);
+  // 1. Fast Path: Parse User ID directly from header card text (0ms, no DB latency)
+  let targetUserId: number | null = null;
+  let ticketId: string | null = null;
 
-  let targetUserId: number | null = messageRecord?.user_id || null;
-  let ticketId = messageRecord?.ticket_id || null;
-
-  // 2. Fallback: Parse User ID directly from header card text (supports Khmer & English)
-  if (!targetUserId && (replyTo.text || replyTo.caption)) {
+  if (replyTo.text || replyTo.caption) {
     const fullText = replyTo.text || replyTo.caption || '';
     const match = 
       fullText.match(/លេខសម្គាល់អ្នកប្រើប្រាស់:\s*([0-9]+)/i) ||
@@ -41,6 +38,15 @@ export async function handleAdminReply(ctx: Context) {
 
     if (match) {
       targetUserId = parseInt(match[1], 10);
+    }
+  }
+
+  // 2. Slow Path Fallback: Look up in database only if text parsing didn't match
+  if (!targetUserId) {
+    const messageRecord = await RelayService.findMessageByAdminMsgId(replyTo.message_id);
+    if (messageRecord) {
+      targetUserId = messageRecord.user_id;
+      ticketId = messageRecord.ticket_id;
     }
   }
 
@@ -53,7 +59,7 @@ export async function handleAdminReply(ctx: Context) {
   const activeTicketKey = ticketId || `user_${targetUserId}`;
   const staffUserId = ctx.from?.id || 0;
 
-  // 3. Resolve custom Khmer staff name from web CRUD database, falling back to Telegram profile
+  // 3. Fast Resolve custom Khmer staff name from in-memory cache (0ms)
   const customStaff = await StaffService.getStaff(ctx.from?.username, ctx.from?.id);
   const agentFullName = customStaff?.display_name_km
     ? customStaff.display_name_km
@@ -61,18 +67,11 @@ export async function handleAdminReply(ctx: Context) {
     ? `${ctx.from.first_name || ''} ${ctx.from.last_name || ''}`.trim() || ctx.from.first_name || ctx.from.username || 'ក្រុមការងារ NSSF SOC'
     : 'ក្រុមការងារ NSSF SOC';
 
-  // 4. Send "Live Agent [Full Name] is connected" if this is the first reply or a NEW/DIFFERENT staff member is replying
+  // 4. Send "Live Agent [Full Name] is connected" if new staff member
   const lastStaffUserId = activeTicketStaff.get(activeTicketKey);
   if (lastStaffUserId !== staffUserId) {
     activeTicketStaff.set(activeTicketKey, staffUserId);
-    try {
-      const userRecord = await UserService.getUser(targetUserId);
-      const lang = userRecord?.language || 'km';
-      const t = translations[lang] || translations.km;
-      await ctx.api.sendMessage(targetUserId, t.agentConnected(agentFullName), { parse_mode: 'HTML' });
-    } catch (err) {
-      logger.debug('Could not send agent connected notice:', err);
-    }
+    ctx.api.sendMessage(targetUserId, translations.km.agentConnected(agentFullName), { parse_mode: 'HTML' }).catch(() => {});
   }
 
   // 5. Extract content preview for logging
@@ -112,15 +111,15 @@ export async function handleAdminReply(ctx: Context) {
   }
 
   try {
-    // 6. Copy the admin's reply message directly to the customer's private chat
+    // 6. Instantly copy the admin's reply message directly to customer private chat
     const sentToUser = await ctx.api.copyMessage(
       targetUserId,
       adminChatId,
       adminMsgId
     );
 
-    // 7. Save admin message in Supabase
-    await RelayService.recordMessage({
+    // 7. Save admin message in Supabase in background (non-blocking)
+    RelayService.recordMessage({
       ticket_id: ticketId,
       user_id: targetUserId,
       sender_type: 'admin',
@@ -129,16 +128,12 @@ export async function handleAdminReply(ctx: Context) {
       content_type: contentType,
       text_content: textContent,
       media_file_id: mediaFileId,
-    });
+    }).catch((e) => logger.debug('Background recordMessage error:', e));
 
     logger.info(`Relayed admin reply from ${agentFullName} to user ${targetUserId}`);
 
-    // Optional: React to admin message to confirm delivery
-    try {
-      await ctx.react('👍');
-    } catch {
-      // Reactions might not be supported in some group types, ignore safely
-    }
+    // Optional: React to confirm delivery
+    ctx.react('👍').catch(() => {});
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     logger.error(`Failed to send reply to user ${targetUserId}:`, err);

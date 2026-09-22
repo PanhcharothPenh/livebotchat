@@ -31,22 +31,22 @@ export async function handleUserMessage(ctx: Context) {
     return;
   }
 
-  // 1. Check if user is banned
+  // 1. Fast Check if user is banned (0ms with cache)
   const isBanned = await UserService.isUserBanned(user.id);
   if (isBanned) {
     logger.warn(`Ignored message from banned user ${user.id} (${user.first_name})`);
     return;
   }
 
-  // 2. Sync user profile with Supabase
-  await UserService.syncUser({
+  // 2. Sync user profile with Supabase asynchronously in background (non-blocking)
+  UserService.syncUser({
     id: user.id,
     username: user.username,
     first_name: user.first_name,
     last_name: user.last_name,
-  });
+  }).catch((e) => logger.debug('Background syncUser error:', e));
 
-  // 3. Get or create active support ticket
+  // 3. Fast Get or create active support ticket (0ms with cache)
   const ticket = await TicketService.getOrCreateOpenTicket(user.id);
   const ticketId = ticket?.id || 'general';
   const ticketShortId = ticketId.substring(0, 8);

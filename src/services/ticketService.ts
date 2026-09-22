@@ -1,11 +1,19 @@
 import { supabase, TicketRecord } from '../supabase.js';
 import { logger } from '../utils/logger.js';
 
+const openTicketCache = new Map<number, { ticket: TicketRecord; expiresAt: number }>();
+const TICKET_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
 export class TicketService {
   /**
    * Get an existing open ticket for a user, or create a new one
    */
   static async getOrCreateOpenTicket(userId: number): Promise<TicketRecord | null> {
+    const cached = openTicketCache.get(userId);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.ticket;
+    }
+
     try {
       // Find open ticket
       const { data: openTicket, error: findError } = await supabase
@@ -22,6 +30,7 @@ export class TicketService {
       }
 
       if (openTicket) {
+        openTicketCache.set(userId, { ticket: openTicket, expiresAt: Date.now() + TICKET_CACHE_TTL });
         return openTicket;
       }
 
@@ -40,6 +49,10 @@ export class TicketService {
         return null;
       }
 
+      if (newTicket) {
+        openTicketCache.set(userId, { ticket: newTicket, expiresAt: Date.now() + TICKET_CACHE_TTL });
+      }
+
       return newTicket;
     } catch (err) {
       logger.error(`Exception in getOrCreateOpenTicket for user ${userId}:`, err);
@@ -51,6 +64,7 @@ export class TicketService {
    * Close any open ticket for a user and return the closed ticket
    */
   static async closeOpenTicket(userId: number): Promise<TicketRecord | null> {
+    openTicketCache.delete(userId);
     try {
       const now = new Date().toISOString();
       const { data, error } = await supabase
