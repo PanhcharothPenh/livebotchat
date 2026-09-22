@@ -1,0 +1,32 @@
+{
+  "name": "telegram-live-chat-bot",
+  "version": "1.0.0",
+  "description": "Telegram Live Chat Support Relay Bot with Supabase and Vercel Serverless support",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/local.ts",
+    "start": "node dist/src/local.js",
+    "set-webhook": "tsx scripts/set-webhook.ts"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "livechat",
+    "support",
+    "supabase",
+    "vercel"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.7",
+    "grammy": "^1.35.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
