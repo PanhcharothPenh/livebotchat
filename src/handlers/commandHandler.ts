@@ -1,6 +1,6 @@
 import { Context } from 'grammy';
 import { config } from '../config.js';
-import { translations, getLanguageKeyboard, getRatingKeyboard } from '../utils/i18n.js';
+import { translations, getLanguageKeyboard, getRatingKeyboard, getAdminBottomKeyboard } from '../utils/i18n.js';
 import { UserService } from '../services/userService.js';
 import { TicketService } from '../services/ticketService.js';
 import { RelayService } from '../services/relayService.js';
@@ -29,7 +29,8 @@ export const commandHandlers = {
       `📁 <b>Type:</b> ${ctx.chat.type}\n\n` +
       `<i>👉 If this is your Support Group, copy <code>${ctx.chat.id}</code> into <b>ADMIN_CHAT_ID</b> on Vercel!</i>`;
 
-    await ctx.reply(idText, { parse_mode: 'HTML' }).catch(() => {
+    const keyboard = isAdmin(ctx) ? getAdminBottomKeyboard() : undefined;
+    await ctx.reply(idText, { parse_mode: 'HTML', reply_markup: keyboard }).catch(() => {
       ctx.reply(`Chat ID: ${ctx.chat?.id}`);
     });
   },
@@ -71,6 +72,7 @@ export const commandHandlers = {
     } else if (isAdmin(ctx)) {
       await ctx.reply('🤖 <b>Support Bot Admin Console Ready.</b>\nType /help to see available admin commands.', {
         parse_mode: 'HTML',
+        reply_markup: getAdminBottomKeyboard(),
       }).catch(() => {});
     }
   },
@@ -81,15 +83,15 @@ export const commandHandlers = {
   async help(ctx: Context) {
     if (isAdmin(ctx)) {
       const helpText = 
-        `🛠 <b>Admin Commands:</b>\n\n` +
-        `• <b>Reply to any user message</b> to send them a direct reply.\n` +
-        `• <code>/close</code> - Reply to a user's message to mark ticket resolved & send satisfaction survey.\n` +
-        `• <code>/info &lt;user_id&gt;</code> - View user info & message count.\n` +
-        `• <code>/ban &lt;user_id&gt;</code> - Ban user from sending messages.\n` +
-        `• <code>/unban &lt;user_id&gt;</code> - Unban user.\n` +
-        `• <code>/stats</code> - View bot metrics & open tickets.\n` +
-        `• <code>/broadcast &lt;message&gt;</code> - Send message to all active users.`;
-      await ctx.reply(helpText, { parse_mode: 'HTML' }).catch(() => {});
+        `🛠 <b>របៀបប្រើប្រាស់សម្រាប់ក្រុមការងារ (Admin Guide):</b>\n\n` +
+        `• <b>ឆ្លើយតបទៅកាន់អតិថិជន:</b> ចុច <code>Reply</code> លើសាររបស់អតិថិជនដើម្បីផ្ញើសារត្រឡប់ទៅវិញ។\n` +
+        `• <b>បញ្ចប់ការសន្ទនា:</b> ចុចប៊ូតុង <code>🔴 បញ្ចប់ការសន្ទនា</code> ឬវាយ <code>/close</code>។\n` +
+        `• <b>មើលព័ត៌មានអតិថិជន:</b> ចុចប៊ូតុង <code>ℹ️ ព័ត៌មាន</code> ឬវាយ <code>/info &lt;user_id&gt;</code>។\n` +
+        `• <code>/ban &lt;user_id&gt;</code> - បិទគណនីស្ពែម (Ban user)\n` +
+        `• <code>/unban &lt;user_id&gt;</code> - បើកគណនីឡើងវិញ (Unban user)\n` +
+        `• <code>/stats</code> - មើលចំនួនអ្នកប្រើប្រាស់ និងសំណើទាំងអស់\n` +
+        `• <code>/broadcast &lt;message&gt;</code> - ផ្ញើសារប្រកាសទៅកាន់អ្នកប្រើប្រាស់ទាំងអស់`;
+      await ctx.reply(helpText, { parse_mode: 'HTML', reply_markup: getAdminBottomKeyboard() }).catch(() => {});
     } else {
       await ctx.reply(
         '💬 Send any message, photo, or question to this chat and our support team will get back to you!'
@@ -144,6 +146,7 @@ export const commandHandlers = {
 
       await ctx.reply(`✅ Ticket for user <code>${targetUserId}</code> has been closed and survey sent.`, {
         parse_mode: 'HTML',
+        reply_markup: getAdminBottomKeyboard(),
       });
     } else if (ctx.chat?.type === 'private') {
       targetUserId = ctx.from.id;
@@ -189,6 +192,7 @@ export const commandHandlers = {
     await TicketService.closeOpenTicket(targetUserId);
     await ctx.reply(`🚫 User <code>${targetUserId}</code> has been banned from support.`, {
       parse_mode: 'HTML',
+      reply_markup: getAdminBottomKeyboard(),
     });
   },
 
@@ -214,6 +218,7 @@ export const commandHandlers = {
     await UserService.setBanStatus(targetUserId, false);
     await ctx.reply(`✅ User <code>${targetUserId}</code> has been unbanned.`, {
       parse_mode: 'HTML',
+      reply_markup: getAdminBottomKeyboard(),
     });
   },
 
@@ -263,7 +268,7 @@ export const commandHandlers = {
       `🕒 <b>First Seen:</b> ${user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A'}\n` +
       `🕒 <b>Last Seen:</b> ${user.last_seen_at ? new Date(user.last_seen_at).toLocaleString() : 'N/A'}`;
 
-    await ctx.reply(infoText, { parse_mode: 'HTML' });
+    await ctx.reply(infoText, { parse_mode: 'HTML', reply_markup: getAdminBottomKeyboard() });
   },
 
   /**
@@ -281,7 +286,7 @@ export const commandHandlers = {
       `💬 <b>Total Relayed Messages:</b> ${stats.totalMessages}\n` +
       `🚫 <b>Banned Users:</b> ${stats.bannedUsers}`;
 
-    await ctx.reply(statsText, { parse_mode: 'HTML' });
+    await ctx.reply(statsText, { parse_mode: 'HTML', reply_markup: getAdminBottomKeyboard() });
   },
 
   /**
@@ -317,6 +322,7 @@ export const commandHandlers = {
 
     await ctx.reply(`🏁 <b>Broadcast Finished</b>\n✅ Delivered: ${sent}\n❌ Failed (Blocked/Deleted): ${failed}`, {
       parse_mode: 'HTML',
+      reply_markup: getAdminBottomKeyboard(),
     });
   },
 };

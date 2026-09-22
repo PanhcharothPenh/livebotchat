@@ -41,6 +41,11 @@ export function getBot(tokenOverride?: string): Bot {
     _botInstance.command('stats', commandHandlers.stats);
     _botInstance.command('broadcast', commandHandlers.broadcast);
 
+    // Big Bottom Keyboard button handlers
+    _botInstance.hears('🆔 ពិនិត្យ Chat ID & Telegram ID', commandHandlers.id);
+    _botInstance.hears('❓ របៀបប្រើប្រាស់', commandHandlers.help);
+    _botInstance.hears('📊 ស្ថិតិ (Stats)', commandHandlers.stats);
+
     // Interactive Callback Queries (Language selection, 5-star ratings, feedback categories)
     _botInstance.on('callback_query:data', handleCallbackQuery);
 

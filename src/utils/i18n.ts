@@ -1,4 +1,4 @@
-import { InlineKeyboard } from 'grammy';
+import { InlineKeyboard, Keyboard } from 'grammy';
 
 export interface Translation {
   welcome: string;
@@ -95,4 +95,17 @@ export function getAdminTicketActionKeyboard(userId: number, ticketId: string): 
 export function getAdminTicketClosedKeyboard(closedBy: string): InlineKeyboard {
   return new InlineKeyboard()
     .text(`✅ បានបញ្ចប់ដោយ ${closedBy}`, 'admin_noop');
+}
+
+/**
+ * Persistent Big Bottom Menu Buttons for Support Group
+ */
+export function getAdminBottomKeyboard(): Keyboard {
+  return new Keyboard()
+    .text('🆔 ពិនិត្យ Chat ID & Telegram ID')
+    .text('❓ របៀបប្រើប្រាស់')
+    .row()
+    .text('📊 ស្ថិតិ (Stats)')
+    .resized()
+    .persistent();
 }
