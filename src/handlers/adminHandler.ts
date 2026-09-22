@@ -24,25 +24,37 @@ export async function handleAdminReply(ctx: Context) {
     return;
   }
 
-  // 1. Check if the message being replied to was a relayed message stored in Supabase
+  // 1. Check if the message being replied to was a relayed message or header card in Supabase
   const messageRecord = await RelayService.findMessageByAdminMsgId(replyTo.message_id);
 
-  if (!messageRecord) {
+  let targetUserId: number | null = messageRecord?.user_id || null;
+  let ticketId = messageRecord?.ticket_id || null;
+
+  // 2. Fallback: Parse User ID directly from header card text if replied to header card
+  if (!targetUserId && (replyTo.text || replyTo.caption)) {
+    const fullText = replyTo.text || replyTo.caption || '';
+    const match = fullText.match(/User ID:\s*([0-9]+)/i) || fullText.match(/ID:\s*([0-9]+)/i);
+    if (match) {
+      targetUserId = parseInt(match[1], 10);
+    }
+  }
+
+  if (!targetUserId) {
+    logger.debug(`Reply was not to a tracked user message (reply_to_id: ${replyTo.message_id})`);
     return;
   }
 
-  const targetUserId = messageRecord.user_id;
   const adminMsgId = ctx.message.message_id;
-  const ticketId = messageRecord.ticket_id || `user_${targetUserId}`;
+  const activeTicketKey = ticketId || `user_${targetUserId}`;
 
-  // 2. Extract agent name (from Telegram profile)
+  // 3. Extract agent name (from Telegram profile)
   const agentName = ctx.from
     ? `${ctx.from.first_name || ''} ${ctx.from.last_name || ''}`.trim() || ctx.from.username || 'Support Staff'
     : 'Support Staff';
 
-  // 3. Send "Live Agent [Name] is connected" on first reply for this ticket
-  if (!connectedTickets.has(ticketId)) {
-    connectedTickets.add(ticketId);
+  // 4. Send "Live Agent [Name] is connected" on first reply for this ticket
+  if (!connectedTickets.has(activeTicketKey)) {
+    connectedTickets.add(activeTicketKey);
     try {
       const userRecord = await UserService.getUser(targetUserId);
       const lang = userRecord?.language || 'km';
@@ -53,7 +65,7 @@ export async function handleAdminReply(ctx: Context) {
     }
   }
 
-  // 4. Extract content preview for logging
+  // 5. Extract content preview for logging
   let contentType = 'text';
   let textContent: string | null = null;
   let mediaFileId: string | null = null;
@@ -90,16 +102,16 @@ export async function handleAdminReply(ctx: Context) {
   }
 
   try {
-    // 5. Copy the admin's reply message directly to the customer's private chat
+    // 6. Copy the admin's reply message directly to the customer's private chat
     const sentToUser = await ctx.api.copyMessage(
       targetUserId,
       adminChatId,
       adminMsgId
     );
 
-    // 6. Save admin message in Supabase
+    // 7. Save admin message in Supabase
     await RelayService.recordMessage({
-      ticket_id: messageRecord.ticket_id,
+      ticket_id: ticketId,
       user_id: targetUserId,
       sender_type: 'admin',
       user_message_id: sentToUser.message_id,

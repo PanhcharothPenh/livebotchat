@@ -95,30 +95,42 @@ export async function handleUserMessage(ctx: Context) {
       `👤 <b>Name:</b> ${userDisplay} (${usernameDisplay})\n` +
       `🆔 <b>User ID:</b> <code>${user.id}</code>\n` +
       `🎫 <b>Ticket:</b> <code>#${ticketShortId}</code>\n` +
-      `<i>💡 Reply to the message below to respond directly to this user.</i>`;
+      `<i>💡 Reply to this card or the message below to respond to the user.</i>`;
 
-    await ctx.api.sendMessage(adminChatId, headerText, { parse_mode: 'HTML' });
+    const headerMsg = await ctx.api.sendMessage(adminChatId, headerText, { parse_mode: 'HTML' });
 
-    // 6. Copy the exact message into Admin Group
+    // 6. Copy the exact user message into Admin Group
     const adminRelayMsg = await ctx.api.copyMessage(
       adminChatId,
       ctx.chat.id,
       userMessageId
     );
 
-    // 7. Store the mapping in Supabase
-    await RelayService.recordMessage({
-      ticket_id: ticketId,
-      user_id: user.id,
-      sender_type: 'user',
-      user_message_id: userMessageId,
-      admin_message_id: adminRelayMsg.message_id,
-      content_type: contentType,
-      text_content: textContent,
-      media_file_id: mediaFileId,
-    });
+    // 7. Store BOTH header card ID and relayed message ID in Supabase
+    await Promise.all([
+      RelayService.recordMessage({
+        ticket_id: ticketId,
+        user_id: user.id,
+        sender_type: 'system',
+        user_message_id: userMessageId,
+        admin_message_id: headerMsg.message_id,
+        content_type: 'header',
+        text_content: headerText,
+        media_file_id: null,
+      }),
+      RelayService.recordMessage({
+        ticket_id: ticketId,
+        user_id: user.id,
+        sender_type: 'user',
+        user_message_id: userMessageId,
+        admin_message_id: adminRelayMsg.message_id,
+        content_type: contentType,
+        text_content: textContent,
+        media_file_id: mediaFileId,
+      }),
+    ]);
 
-    logger.info(`Relayed message from user ${user.id} to admin chat (AdminMsgId: ${adminRelayMsg.message_id})`);
+    logger.info(`Relayed message from user ${user.id} to admin chat (Header: ${headerMsg.message_id}, Relay: ${adminRelayMsg.message_id})`);
   } catch (err) {
     logger.error(`Failed to forward message from user ${user.id} to admin group:`, err);
     await ctx.reply('⚠️ Sorry, there was an issue delivering your message to our support team. Please try again shortly.').catch(() => {});
