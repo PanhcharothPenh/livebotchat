@@ -36,6 +36,16 @@ export interface MessageRecord {
   created_at?: string;
 }
 
+export interface StaffMemberRecord {
+  id?: string;
+  telegram_username: string;
+  telegram_user_id?: number | null;
+  display_name_km: string;
+  role?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 let _supabaseInstance: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {

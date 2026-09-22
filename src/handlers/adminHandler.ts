@@ -3,6 +3,7 @@ import { config } from '../config.js';
 import { translations } from '../utils/i18n.js';
 import { UserService } from '../services/userService.js';
 import { RelayService } from '../services/relayService.js';
+import { StaffService } from '../services/staffService.js';
 import { logger } from '../utils/logger.js';
 
 function getAdminChatId(): number {
@@ -51,8 +52,11 @@ export async function handleAdminReply(ctx: Context) {
   const adminMsgId = ctx.message.message_id;
   const activeTicketKey = ticketId || `user_${targetUserId}`;
 
-  // 3. Extract agent full name (from Telegram profile) with Khmer fallback
-  const agentFullName = ctx.from
+  // 3. Resolve custom Khmer staff name from web CRUD database, falling back to Telegram profile
+  const customStaff = await StaffService.getStaff(ctx.from?.username, ctx.from?.id);
+  const agentFullName = customStaff?.display_name_km
+    ? customStaff.display_name_km
+    : ctx.from
     ? `${ctx.from.first_name || ''} ${ctx.from.last_name || ''}`.trim() || ctx.from.first_name || ctx.from.username || 'ក្រុមការងារ NSSF SOC'
     : 'ក្រុមការងារ NSSF SOC';
 

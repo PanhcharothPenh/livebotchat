@@ -1,131 +1,527 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="km">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Telegram Live Chat Support Bot</title>
+  <title>NSSF SOC Support - Staff & Bot Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #229ED9;
-      --bg: #0f172a;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #0b1120;
       --card-bg: #1e293b;
+      --card-border: rgba(255, 255, 255, 0.08);
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --success: #10b981;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --input-bg: #0f172a;
+      --border-color: rgba(255, 255, 255, 0.12);
     }
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Kantumruy Pro', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     body {
       background-color: var(--bg);
       color: var(--text);
-      display: flex;
-      justify-content: center;
-      align-items: center;
       min-height: 100vh;
-      padding: 20px;
+      padding: 30px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
     }
-    .card {
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 40px;
-      max-width: 520px;
+    .container {
+      max-width: 860px;
       width: 100%;
-      text-align: center;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
-    .icon {
-      width: 64px;
-      height: 64px;
-      background: rgba(34, 158, 217, 0.15);
-      border-radius: 50%;
+    .header-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-badge {
+      width: 52px;
+      height: 52px;
+      background: rgba(37, 99, 235, 0.18);
+      border: 1px solid rgba(37, 99, 235, 0.35);
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 20px;
-      font-size: 32px;
+      font-size: 26px;
     }
     h1 {
-      font-size: 24px;
-      margin-bottom: 12px;
+      font-size: 20px;
       font-weight: 700;
+      color: #fff;
     }
-    p {
+    .subtitle {
+      font-size: 13px;
       color: var(--text-muted);
-      font-size: 15px;
-      line-height: 1.6;
-      margin-bottom: 28px;
+      margin-top: 2px;
     }
     .status-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(16, 185, 129, 0.1);
+      background: rgba(16, 185, 129, 0.12);
       color: var(--success);
-      border: 1px solid rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.25);
       padding: 6px 14px;
       border-radius: 9999px;
       font-size: 13px;
       font-weight: 600;
-      margin-bottom: 24px;
     }
     .status-dot {
       width: 8px;
       height: 8px;
       background: var(--success);
       border-radius: 50%;
-      box-shadow: 0 0 10px var(--success);
+      box-shadow: 0 0 8px var(--success);
     }
-    .actions {
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 24px;
+    }
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #e2e8f0;
+    }
+    label span {
+      color: var(--danger);
+    }
+    input, select {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      transition: border-color 0.2s ease;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
     }
     .btn {
-      display: block;
-      padding: 12px 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 18px;
       border-radius: 10px;
       font-weight: 600;
       font-size: 14px;
-      text-decoration: none;
+      border: none;
+      cursor: pointer;
       transition: all 0.2s ease;
+      text-decoration: none;
     }
     .btn-primary {
       background: var(--primary);
       color: #fff;
     }
     .btn-primary:hover {
-      opacity: 0.9;
+      background: var(--primary-hover);
       transform: translateY(-1px);
     }
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .btn-danger-sm {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      width: auto;
     }
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.1);
+    .btn-danger-sm:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Live Preview Box */
+    .preview-box {
+      margin-top: 18px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    .preview-text {
+      color: #38bdf8;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* Staff List */
+    .staff-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+    .staff-item {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.15s ease;
+    }
+    .staff-item:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .staff-avatar {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .staff-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .staff-name {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .staff-username {
+      font-size: 12px;
+      color: #38bdf8;
+      font-family: monospace;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 36px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      display: none;
+    }
+    .alert-success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+    .alert-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+
+    .footer-tools {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .btn-outline {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      text-decoration: none;
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="icon">🤖</div>
-    <div class="status-badge">
-      <span class="status-dot"></span>
-      Serverless Bot Online
-    </div>
-    <h1>Telegram Live Chat Support</h1>
-    <p>Your Telegram support relay bot is running on Vercel Serverless with Supabase database.</p>
+  <div class="container">
     
-    <div class="actions">
-      <a href="/api/set-webhook" class="btn btn-primary">⚡ Click to Activate Telegram Webhook</a>
-      <a href="/api/set-webhook?action=info" class="btn btn-secondary">🔍 Check Webhook Status</a>
+    <!-- Top Header -->
+    <div class="header-card">
+      <div class="brand">
+        <div class="logo-badge">🛡️</div>
+        <div>
+          <h1>NSSF SOC Support Bot</h1>
+          <div class="subtitle">ប្រព័ន្ធគ្រប់គ្រងបុគ្គលិកឆ្លើយតប និងស្វ័យប្រវត្តិកម្ម Telegram</div>
+        </div>
+      </div>
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        Serverless Online
+      </div>
     </div>
+
+    <!-- Main Grid Layout -->
+    <div class="grid">
+      
+      <!-- Left Column: Add/Edit Staff Form -->
+      <div class="card">
+        <div class="card-title">👤 បញ្ចូល ឬកែប្រែបុគ្គលិក</div>
+        <div class="card-desc">កំណត់ឈ្មោះពេញជាភាសាខ្មែរសម្រាប់គណនី Telegram</div>
+
+        <div id="formAlert" class="alert"></div>
+
+        <form id="staffForm">
+          <div class="form-group">
+            <label>Telegram Username <span>*</span></label>
+            <input type="text" id="telegramUsername" placeholder="ឧ. P6C5R ឬ @username" required autocomplete="off" />
+          </div>
+
+          <div class="form-group">
+            <label>ឈ្មោះពេញជាភាសាខ្មែរ (Khmer Full Name) <span>*</span></label>
+            <input type="text" id="displayNameKm" placeholder="ឧ. ប៉ែន បញ្ញារ័ត្ន" required />
+          </div>
+
+          <div class="form-group">
+            <label>តួនាទី (Role / Department)</label>
+            <input type="text" id="staffRole" placeholder="ឧ. ភ្នាក់ងារជំនួយការ ឬ SOC Analyst" value="Support Staff" />
+          </div>
+
+          <button type="submit" id="saveBtn" class="btn btn-primary">
+            💾 រក្សាទុកបុគ្គលិក (Save)
+          </button>
+        </form>
+
+        <div class="preview-box">
+          <div>💡 <b>គំរូសារដែលអតិថិជននឹងឃើញពេលឆ្លើយតប៖</b></div>
+          <div id="previewText" class="preview-text">👨‍💼 ភ្នាក់ងារផ្ទាល់ <b>[ឈ្មោះបុគ្គលិក]</b> ត្រូវបានភ្ជាប់។</div>
+        </div>
+      </div>
+
+      <!-- Right Column: Registered Staff List -->
+      <div class="card">
+        <div class="card-title" style="justify-content: space-between;">
+          <span>📋 បញ្ជីបុគ្គលិកដែលបានចុះឈ្មោះ</span>
+          <span id="staffCount" style="font-size: 13px; color: var(--text-muted); font-weight: normal;">(0 នាក់)</span>
+        </div>
+        <div class="card-desc">បុគ្គលិកខាងក្រោមនឹងបង្ហាញឈ្មោះពេញស្វ័យប្រវត្តិនៅពេល Reply ក្នុង Telegram Group</div>
+
+        <div id="staffList" class="staff-list">
+          <div class="empty-state">កំពុងទាញយកទិន្នន័យ...</div>
+        </div>
+
+        <div class="footer-tools">
+          <a href="/api/set-webhook" class="btn-outline" target="_blank">⚡ កំណត់ Webhook</a>
+          <a href="/api/set-webhook?action=info" class="btn-outline" target="_blank">🔍 ពិនិត្យ Webhook</a>
+        </div>
+      </div>
+
+    </div>
+
   </div>
+
+  <script>
+    const form = document.getElementById('staffForm');
+    const usernameInput = document.getElementById('telegramUsername');
+    const nameInput = document.getElementById('displayNameKm');
+    const roleInput = document.getElementById('staffRole');
+    const saveBtn = document.getElementById('saveBtn');
+    const formAlert = document.getElementById('formAlert');
+    const staffListEl = document.getElementById('staffList');
+    const staffCountEl = document.getElementById('staffCount');
+    const previewTextEl = document.getElementById('previewText');
+
+    // Live preview updater
+    nameInput.addEventListener('input', () => {
+      const val = nameInput.value.trim();
+      previewTextEl.innerHTML = `👨‍💼 ភ្នាក់ងារផ្ទាល់ <b>${val || '[ឈ្មោះបុគ្គលិក]'}</b> ត្រូវបានភ្ជាប់។`;
+    });
+
+    function showAlert(msg, isError = false) {
+      formAlert.textContent = msg;
+      formAlert.className = `alert ${isError ? 'alert-error' : 'alert-success'}`;
+      formAlert.style.display = 'block';
+      setTimeout(() => {
+        formAlert.style.display = 'none';
+      }, 4000);
+    }
+
+    async function loadStaff() {
+      try {
+        const res = await fetch('/api/staff');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.staff)) {
+          renderStaffList(data.staff);
+        } else {
+          staffListEl.innerHTML = '<div class="empty-state">មិនទាន់មានទិន្នន័យបុគ្គលិកនៅឡើយទេ។</div>';
+          staffCountEl.textContent = '(0 នាក់)';
+        }
+      } catch (err) {
+        staffListEl.innerHTML = '<div class="empty-state">⚠️ មិនអាចទាញយកទិន្នន័យបានទេ។ សូមប្រាកដថាបានបង្កើតតារាង staff_members ក្នុង Supabase។</div>';
+      }
+    }
+
+    function renderStaffList(staff) {
+      staffCountEl.textContent = `(${staff.length} នាក់)`;
+      if (staff.length === 0) {
+        staffListEl.innerHTML = '<div class="empty-state">មិនទាន់មានទិន្នន័យបុគ្គលិកនៅឡើយទេ។ សូមបញ្ចូលបុគ្គលិកថ្មីនៅខាងឆ្វេង។</div>';
+        return;
+      }
+
+      staffListEl.innerHTML = staff.map(s => {
+        const initial = (s.display_name_km || s.telegram_username || '?').charAt(0);
+        return `
+          <div class="staff-item">
+            <div class="staff-avatar">${escapeHtml(initial)}</div>
+            <div class="staff-info">
+              <div class="staff-name">${escapeHtml(s.display_name_km)}</div>
+              <div class="staff-username">@${escapeHtml(s.telegram_username)} <span style="color: #64748b;">• ${escapeHtml(s.role || 'Staff')}</span></div>
+            </div>
+            <button class="btn-danger-sm" onclick="deleteStaff('${escapeHtml(s.telegram_username)}')">🗑️ លុប</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = usernameInput.value.trim().replace(/^@/, '');
+      const displayName = nameInput.value.trim();
+      const role = roleInput.value.trim();
+
+      if (!username || !displayName) {
+        showAlert('សូមបញ្ចូល Telegram Username និងឈ្មោះពេញជាភាសាខ្មែរ', true);
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'កំពុងរក្សាទុក...';
+
+      try {
+        const res = await fetch('/api/staff', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegram_username: username,
+            display_name_km: displayName,
+            role: role || 'Support Staff'
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert(`✅ បានរក្សាទុក ${displayName} (@${username}) ដោយជោគជ័យ!`);
+          usernameInput.value = '';
+          nameInput.value = '';
+          previewTextEl.innerHTML = '👨‍💼 ភ្នាក់ងារផ្ទាល់ <b>[ឈ្មោះបុគ្គលិក]</b> ត្រូវបានភ្ជាប់។';
+          loadStaff();
+        } else {
+          showAlert(`❌ ${data.error || 'មានបញ្ហាក្នុងការរក្សាទុក'}`, true);
+        }
+      } catch (err) {
+        showAlert('❌ មិនអាចភ្ជាប់ទៅកាន់ Server បានទេ។', true);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 រក្សាទុកបុគ្គលិក (Save)';
+      }
+    });
+
+    window.deleteStaff = async function(username) {
+      if (!confirm(`តើអ្នកពិតជាចង់លុបគណនី @${username} មែនទេ?`)) return;
+
+      try {
+        const res = await fetch(`/api/staff?username=${encodeURIComponent(username)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          loadStaff();
+        } else {
+          alert('❌ មិនអាចលុបបានទេ: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('❌ Error deleting staff');
+      }
+    };
+
+    loadStaff();
+  </script>
 </body>
 </html>

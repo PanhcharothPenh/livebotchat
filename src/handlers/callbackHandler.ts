@@ -8,6 +8,7 @@ import {
 import { UserService } from '../services/userService.js';
 import { TicketService } from '../services/ticketService.js';
 import { RelayService } from '../services/relayService.js';
+import { StaffService } from '../services/staffService.js';
 import { logger } from '../utils/logger.js';
 
 export async function handleCallbackQuery(ctx: Context) {
@@ -56,7 +57,10 @@ export async function handleCallbackQuery(ctx: Context) {
       }
 
       // Update button on the header card to show who closed it
-      const staffName = `${ctx.from?.first_name || ''} ${ctx.from?.last_name || ''}`.trim() || ctx.from?.first_name || ctx.from?.username || 'ក្រុមការងារ NSSF SOC';
+      const customStaff = await StaffService.getStaff(ctx.from?.username, ctx.from?.id);
+      const staffName = customStaff?.display_name_km
+        ? customStaff.display_name_km
+        : `${ctx.from?.first_name || ''} ${ctx.from?.last_name || ''}`.trim() || ctx.from?.first_name || ctx.from?.username || 'ក្រុមការងារ NSSF SOC';
       await ctx.editMessageReplyMarkup({
         reply_markup: getAdminTicketClosedKeyboard(staffName),
       }).catch(() => {});
