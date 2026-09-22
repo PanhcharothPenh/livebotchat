@@ -5,52 +5,69 @@ import { handleUserMessage } from './handlers/userHandler.js';
 import { handleAdminReply } from './handlers/adminHandler.js';
 import { logger } from './utils/logger.js';
 
-export function createBot(tokenOverride?: string): Bot {
-  const token = tokenOverride || process.env.TELEGRAM_BOT_TOKEN || config.telegramBotToken || '123456:dummytokenforbuild';
-  const bot = new Bot(token.trim());
+let _botInstance: Bot | null = null;
+let _cachedToken = '';
 
-  // Error handling
-  bot.catch((err) => {
-    const ctx = err.ctx;
-    logger.error(`Error while handling update ${ctx.update.update_id}:`, err.error);
-    const e = err.error;
-    if (e instanceof GrammyError) {
-      logger.error('Error in request to Telegram:', e.description);
-    } else if (e instanceof HttpError) {
-      logger.error('Could not contact Telegram:', e);
-    } else {
-      logger.error('Unknown error:', e);
-    }
-  });
+export function getBot(tokenOverride?: string): Bot {
+  const token = (tokenOverride || process.env.TELEGRAM_BOT_TOKEN || config.telegramBotToken || '123456:dummytokenforbuild').trim();
 
-  // Commands
-  bot.command('start', commandHandlers.start);
-  bot.command('help', commandHandlers.help);
-  bot.command('close', commandHandlers.close);
-  bot.command('ban', commandHandlers.ban);
-  bot.command('unban', commandHandlers.unban);
-  bot.command('info', commandHandlers.info);
-  bot.command('stats', commandHandlers.stats);
-  bot.command('broadcast', commandHandlers.broadcast);
+  if (!_botInstance || _cachedToken !== token) {
+    _cachedToken = token;
+    _botInstance = new Bot(token);
 
-  // User & Admin Message Handlers
-  bot.on('message', async (ctx) => {
-    const adminChatId = parseInt(process.env.ADMIN_CHAT_ID || String(config.adminChatId), 10);
+    // Error handling
+    _botInstance.catch((err) => {
+      const ctx = err.ctx;
+      logger.error(`Error while handling update ${ctx?.update?.update_id}:`, err.error);
+      const e = err.error;
+      if (e instanceof GrammyError) {
+        logger.error('Error in request to Telegram:', e.description);
+      } else if (e instanceof HttpError) {
+        logger.error('Could not contact Telegram:', e);
+      } else {
+        logger.error('Unknown error:', e);
+      }
+    });
 
-    // If message is inside the admin chat
-    if (ctx.chat.id === adminChatId) {
-      await handleAdminReply(ctx);
-      return;
-    }
+    // Commands
+    _botInstance.command('start', commandHandlers.start);
+    _botInstance.command('help', commandHandlers.help);
+    _botInstance.command('close', commandHandlers.close);
+    _botInstance.command('ban', commandHandlers.ban);
+    _botInstance.command('unban', commandHandlers.unban);
+    _botInstance.command('info', commandHandlers.info);
+    _botInstance.command('stats', commandHandlers.stats);
+    _botInstance.command('broadcast', commandHandlers.broadcast);
 
-    // If message is in private chat with a regular user
-    if (ctx.chat.type === 'private') {
-      await handleUserMessage(ctx);
-      return;
-    }
-  });
+    // User & Admin Message Handlers
+    _botInstance.on('message', async (ctx) => {
+      const adminChatId = parseInt(process.env.ADMIN_CHAT_ID || String(config.adminChatId), 10);
 
-  return bot;
+      // If message is inside the admin chat
+      if (ctx.chat.id === adminChatId) {
+        await handleAdminReply(ctx);
+        return;
+      }
+
+      // If message is in private chat with a regular user
+      if (ctx.chat.type === 'private') {
+        await handleUserMessage(ctx);
+        return;
+      }
+    });
+  }
+
+  return _botInstance;
 }
 
-export const bot = createBot();
+export const createBot = getBot;
+export const bot = new Proxy({} as Bot, {
+  get(_target, prop) {
+    const liveBot = getBot();
+    const value = (liveBot as unknown as Record<string, unknown>)[prop as string];
+    if (typeof value === 'function') {
+      return value.bind(liveBot);
+    }
+    return value;
+  },
+});

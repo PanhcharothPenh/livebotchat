@@ -22,19 +22,27 @@ export const commandHandlers = {
     if (!ctx.from) return;
 
     if (ctx.chat?.type === 'private') {
-      await UserService.syncUser({
-        id: ctx.from.id,
-        username: ctx.from.username,
-        first_name: ctx.from.first_name,
-        last_name: ctx.from.last_name,
-      });
+      try {
+        await UserService.syncUser({
+          id: ctx.from.id,
+          username: ctx.from.username,
+          first_name: ctx.from.first_name,
+          last_name: ctx.from.last_name,
+        });
+      } catch (err) {
+        logger.error('Failed to sync user on /start:', err);
+      }
 
       const welcome = process.env.WELCOME_MESSAGE || config.welcomeMessage;
-      await ctx.reply(welcome, { parse_mode: 'HTML' });
+      try {
+        await ctx.reply(welcome, { parse_mode: 'HTML' });
+      } catch {
+        await ctx.reply(welcome).catch(() => {});
+      }
     } else if (isAdmin(ctx)) {
       await ctx.reply('🤖 <b>Support Bot Admin Console Ready.</b>\nType /help to see available admin commands.', {
         parse_mode: 'HTML',
-      });
+      }).catch(() => {});
     }
   },
 
@@ -52,11 +60,11 @@ export const commandHandlers = {
         `• <code>/unban &lt;user_id&gt;</code> - Unban user.\n` +
         `• <code>/stats</code> - View bot metrics & open tickets.\n` +
         `• <code>/broadcast &lt;message&gt;</code> - Send message to all active users.`;
-      await ctx.reply(helpText, { parse_mode: 'HTML' });
+      await ctx.reply(helpText, { parse_mode: 'HTML' }).catch(() => {});
     } else {
       await ctx.reply(
         '💬 Send any message, photo, or question to this chat and our support team will get back to you!'
-      );
+      ).catch(() => {});
     }
   },
 
@@ -106,7 +114,7 @@ export const commandHandlers = {
       // User closing their own ticket
       targetUserId = ctx.from.id;
       await TicketService.closeOpenTicket(targetUserId);
-      await ctx.reply(closedMsg);
+      await ctx.reply(closedMsg).catch(() => {});
     }
   },
 
