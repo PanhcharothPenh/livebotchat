@@ -9,6 +9,7 @@ import { UserService } from '../services/userService.js';
 import { TicketService } from '../services/ticketService.js';
 import { RelayService } from '../services/relayService.js';
 import { StaffService } from '../services/staffService.js';
+import { activeTicketStaff } from './adminHandler.js';
 import { logger } from '../utils/logger.js';
 
 export async function handleCallbackQuery(ctx: Context) {
@@ -42,6 +43,10 @@ export async function handleCallbackQuery(ctx: Context) {
       }
 
       await TicketService.closeOpenTicket(targetUserId);
+
+      // Reset active staff tracker for this session
+      activeTicketStaff.delete(ticketId);
+      activeTicketStaff.delete(`user_${targetUserId}`);
 
       // Send 5-star rating to customer
       const userRecord = await UserService.getUser(targetUserId);

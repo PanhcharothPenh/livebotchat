@@ -9,6 +9,7 @@ import {
 import { UserService } from '../services/userService.js';
 import { TicketService } from '../services/ticketService.js';
 import { RelayService } from '../services/relayService.js';
+import { activeTicketStaff } from './adminHandler.js';
 import { logger } from '../utils/logger.js';
 
 function getAdminChatId(): number {
@@ -130,6 +131,10 @@ export const commandHandlers = {
 
       const closedTicket = await TicketService.closeOpenTicket(targetUserId);
       const ticketId = closedTicket?.id || 'general';
+
+      // Reset active staff tracker for this session
+      activeTicketStaff.delete(ticketId);
+      activeTicketStaff.delete(`user_${targetUserId}`);
 
       const userRecord = await UserService.getUser(targetUserId);
       const lang = userRecord?.language || 'km';

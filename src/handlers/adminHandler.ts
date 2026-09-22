@@ -10,8 +10,8 @@ function getAdminChatId(): number {
   return parseInt(process.env.ADMIN_CHAT_ID || String(config.adminChatId), 10);
 }
 
-// Track if an agent connected notification was sent for the active ticket
-const connectedTickets = new Set<string>();
+// Track the active staff member ID for each ticket/user
+export const activeTicketStaff = new Map<string, number>();
 
 export async function handleAdminReply(ctx: Context) {
   const adminChatId = getAdminChatId();
@@ -51,6 +51,7 @@ export async function handleAdminReply(ctx: Context) {
 
   const adminMsgId = ctx.message.message_id;
   const activeTicketKey = ticketId || `user_${targetUserId}`;
+  const staffUserId = ctx.from?.id || 0;
 
   // 3. Resolve custom Khmer staff name from web CRUD database, falling back to Telegram profile
   const customStaff = await StaffService.getStaff(ctx.from?.username, ctx.from?.id);
@@ -60,9 +61,10 @@ export async function handleAdminReply(ctx: Context) {
     ? `${ctx.from.first_name || ''} ${ctx.from.last_name || ''}`.trim() || ctx.from.first_name || ctx.from.username || 'ក្រុមការងារ NSSF SOC'
     : 'ក្រុមការងារ NSSF SOC';
 
-  // 4. Send "Live Agent [Full Name] is connected" on first reply for this ticket
-  if (!connectedTickets.has(activeTicketKey)) {
-    connectedTickets.add(activeTicketKey);
+  // 4. Send "Live Agent [Full Name] is connected" if this is the first reply or a NEW/DIFFERENT staff member is replying
+  const lastStaffUserId = activeTicketStaff.get(activeTicketKey);
+  if (lastStaffUserId !== staffUserId) {
+    activeTicketStaff.set(activeTicketKey, staffUserId);
     try {
       const userRecord = await UserService.getUser(targetUserId);
       const lang = userRecord?.language || 'km';
