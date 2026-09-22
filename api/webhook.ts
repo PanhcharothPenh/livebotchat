@@ -21,6 +21,11 @@ export default async function (req: IncomingMessage & { body?: unknown }, res: S
 
     const bot = getBot(token);
 
+    // Initialize bot info if not already done
+    if (!bot.isInited()) {
+      await bot.init();
+    }
+
     // Read update body
     let updateData: unknown = req.body;
 
@@ -44,7 +49,6 @@ export default async function (req: IncomingMessage & { body?: unknown }, res: S
     }
 
     if (updateData && typeof updateData === 'object') {
-      // Process update with live bot
       await bot.handleUpdate(updateData as any);
     }
 
@@ -54,7 +58,7 @@ export default async function (req: IncomingMessage & { body?: unknown }, res: S
   } catch (err) {
     logger.error('Error handling webhook update:', err);
     if (!res.headersSent) {
-      res.statusCode = 200; // Return 200 to Telegram so it doesn't repeatedly retry failing updates
+      res.statusCode = 200;
       res.end(JSON.stringify({ ok: false, error: String(err) }));
     }
   }
