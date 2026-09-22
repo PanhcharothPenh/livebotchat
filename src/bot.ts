@@ -5,9 +5,9 @@ import { handleUserMessage } from './handlers/userHandler.js';
 import { handleAdminReply } from './handlers/adminHandler.js';
 import { logger } from './utils/logger.js';
 
-export function createBot(): Bot {
-  const token = config.telegramBotToken || '123456:dummytokenforbuild';
-  const bot = new Bot(token);
+export function createBot(tokenOverride?: string): Bot {
+  const token = tokenOverride || process.env.TELEGRAM_BOT_TOKEN || config.telegramBotToken || '123456:dummytokenforbuild';
+  const bot = new Bot(token.trim());
 
   // Error handling
   bot.catch((err) => {
@@ -35,8 +35,10 @@ export function createBot(): Bot {
 
   // User & Admin Message Handlers
   bot.on('message', async (ctx) => {
+    const adminChatId = parseInt(process.env.ADMIN_CHAT_ID || String(config.adminChatId), 10);
+
     // If message is inside the admin chat
-    if (ctx.chat.id === config.adminChatId) {
+    if (ctx.chat.id === adminChatId) {
       await handleAdminReply(ctx);
       return;
     }

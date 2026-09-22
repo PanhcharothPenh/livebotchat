@@ -1,21 +1,19 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { Bot } from 'grammy';
-import { bot } from '../src/bot.js';
-import { config } from '../src/config.js';
 import { logger } from '../src/utils/logger.js';
 
 export default async function (req: IncomingMessage, res: ServerResponse) {
   try {
-    const token = process.env.TELEGRAM_BOT_TOKEN || config.telegramBotToken;
+    const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
 
-    if (!token || token.includes('dummy') || token.trim() === '') {
+    if (!token || token.includes('dummy')) {
       res.statusCode = 400;
       res.setHeader('Content-Type', 'application/json');
       res.end(
         JSON.stringify(
           {
             success: false,
-            error: 'TELEGRAM_BOT_TOKEN is missing or not set in Vercel Environment Variables. Please add TELEGRAM_BOT_TOKEN in Vercel Settings -> Environment Variables and Redeploy.',
+            error: 'TELEGRAM_BOT_TOKEN is missing in Vercel Environment Variables. Please add it and Redeploy.',
           },
           null,
           2
@@ -29,9 +27,9 @@ export default async function (req: IncomingMessage, res: ServerResponse) {
     const webhookUrl = `${protocol}://${host}/api/webhook`;
 
     // Dynamic bot instance with live token
-    const liveBot = new Bot(token.trim());
+    const liveBot = new Bot(token);
 
-    // Query parameters check (e.g. ?action=info or ?action=set)
+    // Query parameters check (e.g. ?action=info or ?action=delete)
     const urlObj = new URL(req.url || '/', `${protocol}://${host}`);
     const action = urlObj.searchParams.get('action') || 'set';
 
@@ -52,11 +50,19 @@ export default async function (req: IncomingMessage, res: ServerResponse) {
     }
 
     // Default: Set webhook
-    const webhookSecret = process.env.WEBHOOK_SECRET || config.webhookSecret;
-    await liveBot.api.setWebhook(webhookUrl, {
-      secret_token: webhookSecret,
-      allowed_updates: ['message', 'edited_message', 'callback_query'],
-    });
+    const webhookSecret = process.env.WEBHOOK_SECRET?.trim();
+    
+    // Configure webhook with or without secret
+    if (webhookSecret) {
+      await liveBot.api.setWebhook(webhookUrl, {
+        secret_token: webhookSecret,
+        allowed_updates: ['message', 'edited_message', 'callback_query'],
+      });
+    } else {
+      await liveBot.api.setWebhook(webhookUrl, {
+        allowed_updates: ['message', 'edited_message', 'callback_query'],
+      });
+    }
 
     const info = await liveBot.api.getWebhookInfo();
     const me = await liveBot.api.getMe();
@@ -89,7 +95,6 @@ export default async function (req: IncomingMessage, res: ServerResponse) {
         {
           success: false,
           error: message,
-          hint: 'Make sure TELEGRAM_BOT_TOKEN is correct and redeploy if you recently changed environment variables in Vercel.',
         },
         null,
         2

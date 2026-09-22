@@ -1,14 +1,23 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { webhookCallback } from 'grammy';
 import { bot } from '../src/bot.js';
-import { config } from '../src/config.js';
 import { logger } from '../src/utils/logger.js';
 
-// Create the webhook handler
-const handler = webhookCallback(bot, 'http', {
-  secretToken: config.webhookSecret,
-  timeoutMilliseconds: 10000,
-});
+// Setup webhook callback without strict secret requirement unless explicitly configured
+const webhookSecret = process.env.WEBHOOK_SECRET?.trim();
+
+const handler = webhookCallback(
+  bot,
+  'http',
+  webhookSecret
+    ? {
+        secretToken: webhookSecret,
+        timeoutMilliseconds: 10000,
+      }
+    : {
+        timeoutMilliseconds: 10000,
+      }
+);
 
 export default async function (req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'POST') {
